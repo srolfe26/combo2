@@ -5,18 +5,19 @@ var builder = require('wui-builder');
 
 
 // Perform init
-shell.rm('-rf', './combo2-v0.2');
-shell.mkdir('-p', './combo2-v0.2/css');
+shell.rm('-rf', './dist');
+shell.mkdir('-p', './dist/css');
 
 
 // Customize copyright
 builder.addCopyright = function(src) {
-    return  "/*! Combo2" + 
+    return  "/*! Combo2 0.3" + 
         // Copyright should be the year the work was first published to the year last modified
-        "\n * Copyright (c) 2016 Stephen Rolfe Nielsen (rolfe.nielsen@gmail.com)" +
+        "\n * Copyright (c) 2016 Stephen Rolfe Nielsen" +
         "\n *" +
-        "\n * @license MIT" +
-        "\n * http://www.wui-js.com/wui-1-2-1/license.html" +
+        "\n * https://github.com/srolfe26/combo2" +
+        "\n *" +
+        "\n * @license MIT 2016 Stephen Rolfe Nielsen" +
         "\n */ \n\n" + 
         src;
 };
@@ -66,44 +67,44 @@ var opts = {
 };
  
 var files = [
-    './src/js/core-methods.js'
-    , './src/js/Component/Data.js'
-    , './src/js/Component/Smarty.js'
-    , './src/js/goodies/Combo2.js'
+    './src/core-methods.js'
+    , './src/Data.js'
+    , './src/Smarty.js'
+    , './src/Combo2.js'
 ];
 
 
 buildJSHint(files, opts, function(err, hasError) {
     /*********************************** START BUILDING *******************************************/
     var combo = builder.concat([
-        './src/js/Component/Data.js'
-        , './src/js/Component/Smarty.js'
-        , './src/js/goodies/Combo2.js'
+        './src/Data.js'
+        , './src/Smarty.js'
+        , './src/Combo2.js'
     ]);
 
     // Create 'combo-2.js'
     builder.buildFile({
         src : [
-            './src/js/libs/es5-shim.js',
-            './src/js/libs/verge.js',
-            builder.addCopyright(builder.concat(['./src/js/core-methods.js'])),
+            './src/libs/es5-shim.js',
+            './src/libs/verge.js',
+            builder.addCopyright(builder.concat(['./src/core-methods.js'])),
             combo
         ],
-        dest : './combo2-v0.2/combo-2.js',
+        dest : './dist/combo-2.js',
         fn: []
     });
 
     // Create 'combo-2.min.js'
     builder.buildFile({
         src : [
-            UglifyJS.minify('./combo2-v0.2/combo-2.js').code
+            UglifyJS.minify('./dist/combo-2.js').code
         ],   
-        dest : './combo2-v0.2/combo-2.min.js',
+        dest : './dist/combo-2.min.js',
         fn: ['addCopyright']
     });
 
     /********************************************** CSS ***********************************************/
-    builder.cssMinify('./src/css/goodies/combo-2.css', './combo2-v0.2/css/combo-2.css', './src/css/goodies/');
+    builder.cssMinify('./src/combo-2.css', './dist/css/combo-2.css', './src/');
 
     if (hasError === true) {
         console.log('---------------------------------------------------------------------------');

@@ -1,3 +1,109 @@
+/**
+ * Combo2 - A WUI-based control
+ * =================================================================================================
+ * (a combination of a select and an autocomplete)
+ *
+ * 
+ * Functionality
+ * -------------
+ *
+ * - Combo requires valueItem and titleItem attributes. 
+ *     - If consuming a `<select>` off the DOM (see below), these values will be set automatically
+ *       to 'value' for valueItem, and 'title' for titleItem.
+ *     - By default, these will automatically create a template of '<li>{titleItem}</li>'
+ * - Custom templates can be defined for the option list items on the Combo, and follow the rules 
+ *   of the Wui.Smarty object.
+ * - Multiple selection is not supported at this time
+ * - Arrow button can be removed to make the control appear more like an autocomplete.
+ *
+ * 
+ * - Can be asynchronously loaded from a remote data store and search locally
+ *     - Configs: url, [params], autoLoad = true
+ * - Can be asynchronously loaded from a remote data store and search asynchronously
+ *     - Configs: url, [params], searchLocal = false
+ * - Can assume the position and values of a `<select>` element on the DOM
+ *     - Data set in the object definition, OR
+ *     - Data will be created from a select box
+ *         - Combo construction will take the form `new Wui.Combo(<config object>, <select box>)`.
+ *         - Disabled options will have a value of `null`.
+ *         - Options without a value attribute will get the value of the text they contain.
+ *         - Options with a blank value, or no value attribute and no text sub-node, will return
+ *           a value of "".
+ *         - Data will be in the form:
+ *             ```
+ *             {
+ *                 value: '<value attribute, or other as described above>', 
+ *                 label: '<text sub-node of the option tag>'
+ *             }
+ *             ```
+ *
+ * Interactions
+ * ------------
+ *
+ * - Clicking:
+ *     - When the Combo's field doesn't have focus, clicking on the field will open the dropdown
+ *       and select all of the text currently in the field.
+ *     - Clicking the Combo's field when it does have focus merely moves the cursor within the field.
+ *     - Clicking the Combo's arrow button toggles the dropdown open and shut
+ *     - Clicking on a menu item in the option list will select the item, fill the field with the
+ *       selected item, close the drop down, and put the cursor at the end of the field.
+ *     - Clicking away from the Combo will close the option list (if open) and remove focus.
+ * 
+ * - Typing
+ *     - Tabbing
+ *         - Tabbing into the drop down will select the text in the field, but will not 
+ *           open the dropdown.
+ *         - Tabbing when the field has focus will set the current selection and move away from the
+ *           field to the next tab item.
+ *             - If the option list is open, it will be closed
+ *             - If the field is blank, and there is a blank item in the options, the field will be 
+ *               blanked. Otherwise the field will revert to the currently selected item. Any text in
+ *               the text field from a hover (see 'Hovering' above) will revert to the selected item.
+ *     - Arrow Down
+ *         - If the option list is open, the selection will move within the list, filling the field
+ *           with the 'titleItem' of the selected item. When the selection reaches the bottom of the 
+ *           list an arrow down press will remove selection and focus will be set on the field with
+ *           whatever value was in the field the last time the field had focus. An arrow down from
+ *           focus in the field will select the first item in the options list.
+ *         - If the option list is closed, an arrow up or down will open the list and hilight the
+ *           first available option.
+ *     - Arrow Up
+ *         - Same functionality of arrow down in reverse order
+ *     - Enter
+ *         - If the options list is open, enter key will set the value of the field to the currently 
+ *           hilighted item in the option list, and close the list.
+ *         - If the options list is closed, enter has no effect.
+ *     - Escape
+ *         - Sets the value of the field back to its previous value, and closes the options list 
+ *           if it's open.
+ *     - Any other typing will cause a search of the options list.
+ *         - Local searching (determined by the searchLocal attribute, default: true) will cause an
+ *           unbounded search of the DOM text of the items in the options list.
+ *         - Remote searching will send requests to the server, and will be at the mercy of the rules
+ *           of the search method on the server.
+ *             - Causes a redraw of the options list
+ *             - Matching text in the DOM elements of the options list will be hilighted, but may not
+ *               necessarily match the rules of the remote search. This is not an error, but care
+ *               should be taken to make sure hilighting is not spotty or nonsensical if/when
+ *               rules mismatch.
+ *             - The search parameter passed to the back-end is the value of the field, and by default
+ *               it's named 'srch'. It can be changed via the `searchArgName` prameter.
+ *             - A minimum number of characters can be set before a remote search will fire so that
+ *               there are not too many search results. This is set with the `minKeys` attribute. The
+ *               default value though is 1.
+ *         - If there are no matching results, by default 'No Results.' will be shown in the options
+ *           list. This message can be changed with the `emptyMsg` attribute.
+ *
+ * @param       Object      args    A configuration object containing overrides for the default configs
+ *                                  below as well as methods in the prototype.
+ *
+ * @param       Node        target  Optional. A target can be a DOM node, a jQuery Object, or a selector
+ *                                  string that returns one item that is expected to reference a <select>
+ *                                  box that will have its data pulled into the Combo's data array.
+ *
+ * @returns     Object      The Wui.Combo2 object is returned. Should be called as:
+ *                              combo = new Wui.Combo2({...}, select);
+ */
 Wui.Combo2 = function(args, target) {    
     $.extend(this, {        
         // Whether to load remote data on instantiation of the Combo (true), or to load 
