@@ -132,6 +132,8 @@ Wui.Combo2 = function(args, target) {
             spellcheck:         'false'
         }).addClass('wui-datalist-search'),
         
+        hiddenCls: 'wui-hidden',
+        
         // The minimum number of characters that must be in the field before a search will occur. If
         // searching against a very large dataset, increasing this number will help reduce the
         // size of the search results.
@@ -249,7 +251,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         
         // The drop down has to be display block, but we don't necessarily want to show it
         if (!me._open) {
-            me.dd.css({visibility: 'hidden'}).removeClass('wui-hidden');
+            me.dd.css({visibility: 'hidden'}).removeClass(me.hiddenCls);
         }
         
         // Clear the current width on the field
@@ -280,7 +282,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
         
         if (!me._open) {
-            me.dd.addClass('wui-hidden');
+            me.dd.addClass(me.hiddenCls);
         }
     },
     
@@ -402,7 +404,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             $(window).scrollTop(-scrollTop);
             
             me._open = false;
-            me.dd.addClass('wui-hidden');
+            me.dd.addClass(me.hiddenCls);
             
             // Only reselect the field in the instance that the close options list button was pressed.
             if (me.isBlurring !== undefined) {
@@ -629,19 +631,19 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
                 // Search only visible text here (rather than regex'ing on the html) so we only get visible items
                 if(itm.text().toUpperCase().indexOf(srchVal.toUpperCase()) >= 0) {
-                    hilightText(itm).removeClass('wui-hidden');
+                    hilightText(itm).removeClass(me.hiddenCls);
                 }
                 else {
-                    clearHilight(itm).addClass('wui-hidden');
+                    clearHilight(itm).addClass(me.hiddenCls);
                 }
             });
-            me.dd.children('.wui-datalist-disabled').addClass('wui-hidden');
+            me.dd.children('.wui-datalist-disabled').addClass(me.hiddenCls);
         }
         else {
             me.dd.children().each(function() {
                 var itm = $(arguments[1]);
                 
-                clearHilight(itm).removeClass('wui-hidden');
+                clearHilight(itm).removeClass(me.hiddenCls);
             });
         }
         
@@ -679,7 +681,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         
         // Create dropdown container.
         $('body').append(
-            me.dd = $('<ul>').addClass('wui-combo-dd wui-hidden' + me.ddCls)
+            me.dd = $('<ul>').addClass('wui-combo-dd ' + me.hiddenCls + ' ' + me.ddCls)
         );
         
         // Attach the combo to a specified target
@@ -689,7 +691,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             me.idCls = Wui.id(target.attr('name'));
 
             // Hide select box and replace it with the Combo2. Apply styles.
-            me.hidden_field = target.after(me.el).addClass('wui-hidden').prependTo(me.el);
+            me.hidden_field = target.after(me.el).addClass(me.hiddenCls).prependTo(me.el);
             me.attachToElement(target);
             me.cssByParam();
             
@@ -897,7 +899,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             });
             
             // Hide drop down while we resize and position it
-            me.dd.css({visibility: 'hidden'}).removeClass('wui-hidden');
+            me.dd.css({visibility: 'hidden'}).removeClass(me.hiddenCls);
             
             me.adjustDropDownSize();
 
