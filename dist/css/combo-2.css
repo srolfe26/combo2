@@ -1,4 +1,4 @@
-/*! Combo2 0.4
+/*! Combo2 0.5
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
@@ -128,7 +128,6 @@ messed with). Specifying the body because we don't want this applied on any othe
 body.wui-combo-no-scroll {
     position: fixed !important;
     overflow-y: scroll !important;
-    width: 100%;
 }
 
 /******************************* Selection & Hilighting Styles ************************************/

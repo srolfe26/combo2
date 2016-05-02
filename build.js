@@ -2,7 +2,7 @@ var shell = require('shelljs');
 var buildJSHint = require('build-jshint');
 var UglifyJS = require("uglifyjs");
 var builder = require('wui-builder');
-
+var version = '0.5';
 
 // Perform init
 shell.rm('-rf', './dist');
@@ -11,7 +11,7 @@ shell.mkdir('-p', './dist/css');
 
 // Customize copyright
 builder.addCopyright = function(src) {
-    return  "/*! Combo2 0.4" + 
+    return  "/*! Combo2 " + version +  
         // Copyright should be the year the work was first published to the year last modified
         "\n * Copyright (c) 2016 Stephen Rolfe Nielsen" +
         "\n *" +

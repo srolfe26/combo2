@@ -120,7 +120,6 @@ messed with). Specifying the body because we don't want this applied on any othe
 body.wui-combo-no-scroll {
     position: fixed !important;
     overflow-y: scroll !important;
-    width: 100%;
 }
 
 /******************************* Selection & Hilighting Styles ************************************/

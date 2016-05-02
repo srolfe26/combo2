@@ -3,6 +3,25 @@
  * =================================================================================================
  * (a combination of a select and an autocomplete)
  *
+ * Examples
+ * --------
+ *
+ * // For the standard select box consumption
+ *  standard_select = new Wui.Combo2({}, '#target');
+ *
+ * // Combo with its own dataset
+ * local_dataset = new Wui.Combo2({
+ *     valueItem: 'id',
+ *     titleItem: 'name',
+ *     data:   [
+ *         {id:0, name:"Jeff"},
+ *         {id:2, name:"Steve"},
+ *         {id:1, name:"Tim"}
+ *     ],
+ *     // 'append'|'prepend'|'before'|'after'
+ *     append: // Some parent target to perform the append on
+ * });
+ *
  * 
  * Functionality
  * -------------
@@ -294,7 +313,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * @param   {Object}    altAttr     Attributes that should be applied to the alternate target
      * @param   {jQuery}    altTarget   Alternate target from setting ids on the 'el' of the object
      */
-    argsByParam:function() { //(altAttr, altTarget) {
+    argsByParam: function() { //(altAttr, altTarget) {
         var me = this,
             attributesToApply = {},
             // altTargetAttributes = {},
@@ -392,16 +411,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * Closes the drop-down menu and restores the body to whatever scroll state it was in previously.
      */
     close: function() { 
-        var me = this,
-            body,
-            scrollTop;
+        var me = this;
             
         if (me._open === true) {
-            body = $('body');
-            scrollTop = parseInt(body.css('top'));
-            
-            body.removeClass('wui-combo-no-scroll').css('top','');
-            $(window).scrollTop(-scrollTop);
+            me.lockBodyScroll();
             
             me._open = false;
             me.dd.addClass(me.hiddenCls);
@@ -587,6 +600,45 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         });
         
         return retVal;
+    },
+    
+    
+    /**
+     * Determines whether to get data from a local or remote source, and whether the data has
+     * already had an initial load so it doesn't repeat remote calls.
+     */
+    getSrcData: function() {
+        var me = this;
+        
+        if (me.initLoaded !== true && $.isArray(me.data) && me.data.length > 0) {
+            me.setParams(me.params);
+            me.initLoaded = true;
+
+            return me.setData(me.data);
+        }
+        else {
+            if (me.autoLoad) {
+                if (this.url !== null) {
+                    return me.loadData();
+                }
+                else {
+                    return me.setData(me.data);
+                }
+            }
+        }
+    },
+
+
+    /**
+     * Returns only the simple value of an item.
+     */
+    getVal: function(){
+        var me = this,
+            ret_val = ($.isPlainObject(me.value) && typeof me.value[me.valueItem] != 'undefined') ?
+                me.value[me.valueItem] :
+                    me.value;
+
+        return ret_val;
     },
     
     
@@ -784,11 +836,65 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         return itm;
     },
+
+
+    /**
+     * Locks or unlocks the ability for the DOM <body> to scroll while the option list is open.
+     * Necessary so we don't have the drop down get disassociated from the field.
+     *
+     * @param       {Boolean}   lockIt      Whether to lock scrolling. Default is false.
+     *
+     * @returns     {jQuery}    Returns the jQuery wrapped body element.
+     */
+    lockBodyScroll: function(lockIt) {
+        var me = this,
+            body = $('body'),
+            win = $(window),
+            scrollCls = 'wui-combo-no-scroll',
+            eventName = 'resize.wui-combo2',
+            scrollTop;
+        
+        // Only necessary to lock scrolling if the body height is larger than the viewport.
+        if (lockIt === true && body.outerHeight(true) > $.viewportH()) {
+            body.css({
+                            // Use $(window).scrollTop because $(body) scrolltop doesn't work in IE8
+                    top:    win.scrollTop() * -1,
+                    
+                            // We have to manage body width here because putting 'width:100%' in
+                            // the CSS class doesn't work for a body that has a margin.
+                    width:  body.width()
+                })
+                .addClass(scrollCls);
+                
+            // Since we're manually setting width on the body, we have to account for window resize
+            win.on(eventName, function() {
+                // turn scroll lock off quickly, adjust drop down and body, and turn lock back on
+                me.lockBodyScroll();
+                me.sizeAndPositionDD();
+                body.css({width: body.width()});
+                me.lockBodyScroll(true);
+            });
+        } 
+        else {
+            scrollTop = parseInt(body.css('top')) * -1;
+            
+            body.removeClass(scrollCls)
+                .css({
+                    top:    '',
+                    width:  ''
+                });
+                
+            win.scrollTop(scrollTop)
+                .off(eventName);
+        }
+            
+        return body;
+    },
     
 
     /**
-     * Creates the items in the options list making their DOM representations through a Wui.Smarty template, and
-     * associating the data with those nodes.
+     * Creates the items in the options list making their DOM representations through a Wui.Smarty
+     * template, and associating the data with those nodes.
      *
      * @returns     {Number}    The number of items that were created
      */
@@ -864,7 +970,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             me.set();
         }
 
-
         // Necessary here because remote queries will remake the list with every keystroke and
         // will change the size/position of the options list.
         me.adjustDropDownSize();
@@ -879,18 +984,18 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
     
     /**
-     * Opens the drop down and resizes the dropdown accordingly based on whether there are existing CSS rules.
+     * Opens the drop down and resizes the dropdown accordingly based on whether there are 
+     * existing CSS rules.
      */
-    open: function(){
-        var me = this;    
+    open: function() {
+        var me = this;
 
         if (!me._open) {
             me._open = true;
             
-            // Use $(window).scrollTop because $(body) scrolltop doesn't work in IE8
-            $('body').css('top', $(window).scrollTop() * -1).addClass('wui-combo-no-scroll');
-
-            // Clear the drop down when it loses focus
+            me.lockBodyScroll(true);
+            
+            // Close the drop down when field loses focus.
             $(document).one('click:' + me.idCls,'*:not(.' +me.idCls+ ' input)', function(event) { 
                 if (event.target !== me.field[0]) {
                     me.setVal(me.value);
@@ -898,20 +1003,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 }
             });
             
-            // Hide drop down while we resize and position it
-            me.dd.css({visibility: 'hidden'}).removeClass(me.hiddenCls);
-            
-            me.adjustDropDownSize();
-
-            Wui.positionItem(me.el, me.dd);
-            me.dd.css('visibility', '');
-            
-            if ($.isPlainObject(me.value)) {
-                me.getItemBy(me.valueItem, me.value[me.valueItem]);
-            }
-            
+            me.sizeAndPositionDD();
             me.field.select();
-            me.scrollToCurrent();   
         }
     },
     
@@ -1284,18 +1377,24 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             return item;
         }
     },
-
-
+    
+    
     /**
-     * Returns only the simple value of an item.
+     * Hide drop down while we resize and position, then show it.
      */
-    getVal: function(){
-        var me = this,
-            ret_val = ($.isPlainObject(me.value) && typeof me.value[me.valueItem] != 'undefined') ?
-                me.value[me.valueItem] :
-                    me.value;
-
-        return ret_val;
+    sizeAndPositionDD: function() {
+        var me = this;
+        
+        me.dd.css({visibility: 'hidden'}).removeClass(me.hiddenCls);
+        me.adjustDropDownSize();
+        Wui.positionItem(me.el, me.dd);
+        me.dd.css('visibility', '');
+        
+        // Select the current item in the option list and scroll to it.
+        if ($.isPlainObject(me.value)) {
+            me.getItemBy(me.valueItem, me.value[me.valueItem]);
+            me.scrollToCurrent();
+        }
     },
 
 
@@ -1326,27 +1425,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             // Return the passed value(s)
             return arguments;
-        }
-    },
-    
-
-    getSrcData: function(){
-        var me = this;
-        
-        if(me.initLoaded !== true && (me.data instanceof Array) && me.data.length > 0) {
-            me.setParams(me.params);
-            me.initLoaded = true;
-
-            return me.setData(me.data);
-        }else{
-            if(me.autoLoad){
-                if (this.url !== null) {
-                    return me.loadData();
-                }
-                else {
-                    return me.setData(me.data);
-                }
-            }
         }
     }
 });

@@ -7,22 +7,21 @@
         <meta name="description" content="WUI - Webteam User Interface is a *vc javascript framework for rapid app development.">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         
+        <link rel="stylesheet" href="demo.css" type="text/css" media="all">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+        
         <style>
             body {
-                text-align: left;
-                margin: 3em;
-                /* Test Scrolling/Positioning */
-                /* margin: 1000px 3em; */
+                /* Test Scrolling/Positioning
+                 margin: 1000px 3em;  */
             }
         </style>
         
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
-        
-        <!-- PRODUCTION FILES -->
+        <!-- PRODUCTION FILES
         <link rel="stylesheet" href="../dist/css/combo-2.min.css" type="text/css" media="all">
-        <script src="../dist/combo-2.min.js"></script>
+        <script src="../dist/combo-2.min.js"></script> -->
         
-        <!-- SOURCE FILES
+        <!-- SOURCE FILES -->
             <link rel="stylesheet" href="../src/combo-2.css" type="text/css" media="all">
             <script src="../src/libs/es5-shim.js"></script>
             <script src="../src/libs/verge.js"></script>
@@ -30,118 +29,145 @@
             <script src="../src/Data.js"></script>
             <script src="../src/Smarty.js"></script>
             <script src="../src/Combo2.js"></script>
-         -->
         
     </head>
     <body>
-        <input type="text" name="guys" list="heroes" />
-        <datalist id="heroes">
-            <option value="clark kent">Super Man</option>
-            <option value="oliver queen">Green Arrow</option>
-            <option value="barry allen">The Flash</option>
-        </datalist>
-        
-        <select name="the_guys" id="the_guys">
-            <optgroup label="Awesome">
-                <option value disabled selected>(required)</option>
-                <option value></option>
-                <option>Tim</option>
-                <option>Stephen</option>
-                <option>Lance</option>
-                <option>Bobby</option>
-                <option>DeVerl</option>
-                <option>Jeff</option>
-            </optgroup>
-            <optgroup label="Super">
-                <option value="bruce wayne">Na na na na na na na na na na na na na na na na na na na na na na na na na Batman!</option>
-                <option value="clark kent">Super Man</option>
-                <option value="oliver queen">Green Arrow</option>
-                <option value="barry allen">The Flash</option>
-            </optgroup>
-        </select>
-        
-        <select name="asdf" id="asdf">
-            <optgroup label="Awesome">
-                <option value disabled selected>(required)</option>
-                <option value></option>
-                <option>Tim</option>
-                <option>Stephen</option>
-                <option>Lance</option>
-                <option>Bobby</option>
-                <option>DeVerl</option>
-                <option>Jeff</option>
-            </optgroup>
-            <optgroup label="Super">
-                <option value="bruce wayne">Na na na na na na na na na na na na na na na na na na na na na na na na na Batman!</option>
-                <option value="clark kent">Super Man</option>
-                <option value="oliver queen">Green Arrow</option>
-                <option value="barry allen">The Flash</option>
-            </optgroup>
-        </select>
-        
-        <input type="text" name="girls" />
-        
-        <script>
-            datalist = new Wui.Combo2({
-                lang:   'html',
-                id:     'hoot',
-                cls:    'some-class',
-                width:  '33%'
-            }, '[name=the_guys]');
+        <div class="content">
+            <h1>Combo 2 Demo</h1>
             
-            loc_datalist = new Wui.Combo2({
+            <p>See the HTML source for implementation details.</p>
+        
+            <h2>Standard Select</h2>
+        
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>standard_select = new Wui.Combo2(
+    {
+        width: '100%'
+    },
+    
+    // jQuery object, DOM node, or selector string
+    '#target'
+);</code></pre>
+                </div>
+                
+                <div class="fifty">
+                    <p>Makes this:</p>
+                    
+                    <select name="original" id="original">
+                        <optgroup label="Awesome">
+                            <option value disabled selected>(required)</option>
+                            <option value></option>
+                            <option>Tim</option>
+                            <option>Stephen</option>
+                            <option>Lance</option>
+                            <option>Bobby</option>
+                            <option>DeVerl</option>
+                            <option>Jeff</option>
+                        </optgroup>
+                        <optgroup label="Super">
+                            <option value="bruce wayne">Na na na na na na na na na na na na na na na na na na na na na na na na na Batman!</option>
+                            <option value="clark kent">Super Man</option>
+                            <option value="oliver queen">Green Arrow</option>
+                            <option value="barry allen">The Flash</option>
+                        </optgroup>
+                    </select>
+
+                    <p>Become this:</p>
+                    
+                    <select name="the_guys" id="target">
+                        <optgroup label="Awesome">
+                            <option value disabled selected>(required)</option>
+                            <option value></option>
+                            <option>Tim</option>
+                            <option>Stephen</option>
+                            <option>Lance</option>
+                            <option>Bobby</option>
+                            <option>DeVerl</option>
+                            <option>Jeff</option>
+                        </optgroup>
+                        <optgroup label="Super">
+                            <option value="bruce wayne">Na na na na na na na na na na na na na na na na na na na na na na na na na Batman!</option>
+                            <option value="clark kent">Super Man</option>
+                            <option value="oliver queen">Green Arrow</option>
+                            <option value="barry allen">The Flash</option>
+                        </optgroup>
+                    </select>                    
+                </div>
+            </div>
+            
+            <h2>Local Dataset</h2>
+            
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>local_dataset = new Wui.Combo2({
+    width:  300,
+    valueItem: 'id',
+    titleItem: 'name',
+    data:   [
+        {id:0, name:"Jeff"},
+        {id:2, name:"Steve"},
+        {id:1, name:"Tim"}
+    ],
+    // 'append'|'prepend'|'before'|'after'
+    append: $('#local_dom_target')
+});</code></pre>
+                </div>
+                
+                <div class="fifty" id="local_dom_target">
+                    <p>Makes this:</p>           
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            // For the standard select box
+            standard_select = new Wui.Combo2({
+                width: '100%'
+            }, '#target');
+            
+            
+            // Combo with its own dataset
+            local_dataset = new Wui.Combo2({
                 width:  200,
                 valueItem: 'id',
                 titleItem: 'name',
-                showOpenButton: false,
-                data:   [{id:0, name:"Professor X"}, {id:2, name:"Steve"}, {id:1, name:"Wolverine"}]
+                data:   [
+                    {id:0, name:"Jeff"},
+                    {id:2, name:"Steve"},
+                    {id:1, name:"Tim"}
+                ],
+                // 'append'|'prepend'|'before'|'after'
+                append: $('#local_dom_target')
             });
             
-            rem_datalist = new Wui.Combo2({
-                autoLoad:   false,
-                width:      200,
-                valueItem:  'tx_id',
-                titleItem:  'description',
-                url:        'data.json',
-                template:   '<li>{|function:"amountView":"amount"} {description}</li>',
-                templateFn: {
-                    amountView: function(amount) {
-                        if (amount > 0) {
-                            return '<span style="color:green">' + amount + '</span>';
-                        }
-                        else {
-                            return '<span style="color:red">' + amount + '</span>';
-                        }
-                    }
-                },
-                // used to simulate a server filtering the data on search for the purpose of this demo.
-                processData: function(r) {
-                    if(this.searchFilter){
-                        for(var i = r.length - 1; i >= 0; i--){
-                            if(r[i][this.titleItem]
-                                .toUpperCase()
-                                .indexOf(this.searchFilter.toUpperCase()) < 0
-                            )
-                                r.splice(i,1);
-                        }
-                    }
-                    return r;                            
-                },
-                placeholder:'Type to Search',
-                after:      '[name=guys]'
-            });
+            // // WUI Change listener
             
             // $(document).on('valchange', function(event, combo) {
             //     if (console) {
-            //         console.log(arguments, combo.val(), $('[name=the_guys]').val());
+            //         console.log(
+            //             arguments,                  // All the information the change event provides
+            //             combo.val(),                // The value of the WUI Combo
+            //             $('[name=the_guys]').val()  // The value of the underlying select box
+            //         );
             //     }
             // });
             
-            // $('[name=the_guys]').on('focus', function(){
+            
+            // // Listener on original select for the focus event to come through
+            
+            // $('#the_guys').on('focus', function(){
             //     if (console) {
             //         console.log('focused!');
             //     }
             // });
+            
+            
+            // // Test loading an option at runtime
             
             // $('[label=Awesome]').append('<option>Dave</Dave>');
             // $('[name=the_guys]').val('Dave');
