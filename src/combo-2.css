@@ -73,7 +73,11 @@
 /* IE8 Only uses \0screen */
 @media \0screen {
     .drop-down-switch:after {
-        margin: -12px 0 0 -6px;
+        margin: -14px 0 0 -6px;
+    }
+    
+    .wui-datalist-search {
+        padding-top: 5px;
     }
 } 
 
@@ -120,6 +124,24 @@ messed with). Specifying the body because we don't want this applied on any othe
 body.wui-combo-no-scroll {
     position: fixed !important;
     overflow-y: scroll !important;
+}
+
+
+/************************************** Optgroup Styles *******************************************/
+.wui-optgroup-label {
+    font-style: italic;
+}
+
+.wui-optgroup {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wui-optgroup li {
+    padding-left: 1.5em;
+    font-style: normal;
+    font-size: 1em;
 }
 
 /******************************* Selection & Hilighting Styles ************************************/
