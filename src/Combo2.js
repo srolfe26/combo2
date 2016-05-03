@@ -706,7 +706,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 if (group.children('ul').children(':visible').length === 0) {
                     group.addClass(me.hiddenCls);
                 }
-            })
+            });
         }
         
         // No search string, clear all hilighting, show all options/items
@@ -921,8 +921,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     make: function() {
         var me = this,
             holder = $('<div>'),
-            optGroups = {},
-            selectedItm;
+            optGroups = {};
 
         // Clear out items list
         me.items = [];
@@ -1158,7 +1157,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             // Determine the value of the edge depending on an arrow key.
             theEnd = (dir > 0) ? 0 : options.length - 1,
-            itm;
+            itm,
+            el;
             
         // If the drop down was just opened, we only want to show the selected item, not change it.
         if (me.justOpened === true) {
@@ -1227,7 +1227,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * If there is a currently selected item, select it afresh in the new data/item-set.
      */
     selectCurrent: function() {
-        var me = this;
+        var me = this,
+            selectedItm;
         
         // Select a pre-applied value if it exists
         if (me.value && me.field.val().length === 0) {

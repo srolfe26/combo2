@@ -129,6 +129,133 @@ if (!Array.prototype.forEach) {
 }());
 
 
+// Production steps of ECMA-262, Edition 5, 15.4.4.19
+// Reference: http://es5.github.io/#x15.4.4.19
+if (!Array.prototype.map) {
+
+  Array.prototype.map = function(callback, thisArg) {
+
+    var T, A, k;
+
+    if (this == null) {
+      throw new TypeError(' this is null or not defined');
+    }
+
+    // 1. Let O be the result of calling ToObject passing the |this| 
+    //    value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get internal 
+    //    method of O with the argument "length".
+    // 3. Let len be ToUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If IsCallable(callback) is false, throw a TypeError exception.
+    // See: http://es5.github.com/#x9.11
+    if (typeof callback !== 'function') {
+      throw new TypeError(callback + ' is not a function');
+    }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
+
+    // 6. Let A be a new array created as if by the expression new Array(len) 
+    //    where Array is the standard built-in constructor with that name and 
+    //    len is the value of len.
+    A = new Array(len);
+
+    // 7. Let k be 0
+    k = 0;
+
+    // 8. Repeat, while k < len
+    while (k < len) {
+
+      var kValue, mappedValue;
+
+      // a. Let Pk be ToString(k).
+      //   This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty internal 
+      //    method of O with argument Pk.
+      //   This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+
+        // i. Let kValue be the result of calling the Get internal 
+        //    method of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Let mappedValue be the result of calling the Call internal 
+        //     method of callback with T as the this value and argument 
+        //     list containing kValue, k, and O.
+        mappedValue = callback.call(T, kValue, k, O);
+
+        // iii. Call the DefineOwnProperty internal method of A with arguments
+        // Pk, Property Descriptor
+        // { Value: mappedValue,
+        //   Writable: true,
+        //   Enumerable: true,
+        //   Configurable: true },
+        // and false.
+
+        // In browsers that support Object.defineProperty, use the following:
+        // Object.defineProperty(A, k, {
+        //   value: mappedValue,
+        //   writable: true,
+        //   enumerable: true,
+        //   configurable: true
+        // });
+
+        // For best browser support, use the following:
+        A[k] = mappedValue;
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+
+    // 9. return A
+    return A;
+  };
+}
+
+
+if (!Array.prototype.filter) {
+  Array.prototype.filter = function(fun/*, thisArg*/) {
+    'use strict';
+
+    if (this === void 0 || this === null) {
+      throw new TypeError();
+    }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== 'function') {
+      throw new TypeError();
+    }
+
+    var res = [];
+    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+    for (var i = 0; i < len; i++) {
+      if (i in t) {
+        var val = t[i];
+
+        // NOTE: Technically this should Object.defineProperty at
+        //       the next index, as push can be affected by
+        //       properties on Object.prototype and Array.prototype.
+        //       But that method's new, and collisions should be
+        //       rare, so use the more-compatible alternative.
+        if (fun.call(thisArg, val, i, t)) {
+          res.push(val);
+        }
+      }
+    }
+
+    return res;
+  };
+}
+
+
 // ES 15.2.3.6 Object.defineProperty ( O, P, Attributes )
 // Partial support for most common case - getters, setters, and values
 (function() {
@@ -1249,7 +1376,7 @@ Wui.Smarty.prototype = {
  * - Combo requires valueItem and titleItem attributes. 
  *     - If consuming a `<select>` off the DOM (see below), these values will be set automatically
  *       to 'value' for valueItem, and 'title' for titleItem.
- *     - By default, these will automatically create a template of '<li>{titleItem}</li>'
+ *     - By default, these will automatically create a template of '<li>{titleItem|escape:html}</li>'
  * - Custom templates can be defined for the option list items on the Combo, and follow the rules 
  *   of the Wui.Smarty object.
  * - Multiple selection is not supported at this time
@@ -1869,10 +1996,14 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * @param   {string}    srchVal    A search term
      */
     hilightText: function(srchVal) {
-        var me = this;
+        var me = this,
+            options = me.items.map(function(itm) {
+                return itm.el;
+            }),
+            hilightCls = 'wui-highlight';
 
         function clearHilight(obj) {
-            return obj.find('.wui-highlight').each(function() {
+            return obj.find('.' + hilightCls).each(function() {
                 $(this).replaceWith($(this).html());
             }).end();
         }
@@ -1882,14 +2013,14 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
             // Recurse so we're only acting on leaf nodes and don't mess up the template
             if (obj.children().length) {
-                obj.children(':not(.wui-datalist-disabled):visible').each(function() {
+                obj.children().each(function() {
                     hilightText($(this));
                 });
             }
             else {
                 obj.html(
                     obj.text().replace( new RegExp(srchVal, "ig"), function(m){
-                        return '<span class="wui-highlight">' +m+ '</span>';
+                        return '<span class="' +hilightCls+ '">' +m+ '</span>';
                     })
                 );
             }
@@ -1897,10 +2028,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             return obj;
         }
 
-        if (srchVal.length !== 0) {
-            me.dd.children(':not(.wui-datalist-disabled)').each(function() {
-                var itm = $(arguments[1]);
-
+        // We have a search string, hilight and hide stuff
+        if (typeof srchVal != 'undefined' && $.trim(srchVal).length !== 0) {
+            // Un-hide all optgroups
+            me.dd.find('.wui-optgroup-label.' + me.hiddenCls).removeClass(me.hiddenCls);
+            
+            options.forEach(function(itm) {
                 // Search only visible text here (rather than regex'ing on the html) so we only get visible items
                 if(itm.text().toUpperCase().indexOf(srchVal.toUpperCase()) >= 0) {
                     hilightText(itm).removeClass(me.hiddenCls);
@@ -1909,13 +2042,25 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     clearHilight(itm).addClass(me.hiddenCls);
                 }
             });
+            
+            // Clear disabled items in a search
             me.dd.children('.wui-datalist-disabled').addClass(me.hiddenCls);
-        }
-        else {
-            me.dd.children().each(function() {
-                var itm = $(arguments[1]);
+            
+            // Clear any optgroups that don't have visible items in them
+            me.dd.children('.wui-optgroup-label').each(function() {
+                var group = $(arguments[1]);
                 
-                clearHilight(itm).removeClass(me.hiddenCls);
+                if (group.children('ul').children(':visible').length === 0) {
+                    group.addClass(me.hiddenCls);
+                }
+            });
+        }
+        
+        // No search string, clear all hilighting, show all options/items
+        else {
+            me.dd.find('.' + me.hiddenCls).removeClass(me.hiddenCls);
+            me.dd.find('.' + hilightCls).each(function() {
+                $(this).replaceWith($(this).html());
             });
         }
         
@@ -1973,6 +2118,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             // If the user hasn't defined a template, provide a default
             if (!me.template) {
+                // No sense escaping the HTML here, because if you're getting injection at the
+                // HTML level, it has already occurred.
                 me.engine.html = me.template = '<li>{label}</li>';
             }
             
@@ -1991,7 +2138,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 me.valueItem &&
                 me.titleItem
             ) {
-                me.engine.html = me.template = '<li>{' +me.titleItem+ '}</li>';
+                me.engine.html = me.template = '<li>{' +me.titleItem+ '|escape:html}</li>';
             }
 
             // Ensure that all required items are present
@@ -2121,85 +2268,119 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     make: function() {
         var me = this,
             holder = $('<div>'),
-            selectedItm;
+            optGroups = {};
 
         // Clear out items list
         me.items = [];
 
         // Show data in list, Add items to me.items
         me.data.forEach(function(rec) {
-            var disabled = (rec.disabled === true),
-                itm = {
+            var itm = {
                     el: $(me.engine.make(rec)),
                     rec: rec
                 };
-
+            
+            // Add newly made item to the items array which represents data (rec) bound with a
+            // DOM node (el).
             me.items.push(itm);
-
-            holder.append(
-                itm.el
-                    .data('itm', itm)
-                    .bind('touchstart', function() {
-                        if (!disabled) {
-                            me.itemSelect($(this).data('itm'));
-                            me.isBlurring = false;
-                        }
-                    })
-                    .on({
-                        mouseenter: (!disabled) ? function(){ 
-                                        me.itemSelect($(this).data('itm')); 
-                                    } : function(){},
-                                    
-                        mousedown:  (!disabled) ? function(){ 
-                                        me.isBlurring = false; 
-                                    } : function(){},
-                        click:      (!disabled) ? function(){ 
-                                        me.set(); 
-                                        me.field.select();
-                                        me.close();
-                                    } : function(){}
-                    })
-                    .addClass((disabled) ? 'wui-datalist-disabled' : '')
-            );
+            
+            // No listeners for disabled items disables them in this context
+            if (rec.disabled !== true) {
+                me.optionEventListeners(itm);
+            }
+            else {
+                itm.el.addClass('wui-datalist-disabled');
+            }
+            
+            // Put item into optgroups if necessary 
+            if (typeof rec.optgroup != 'undefined' && String(rec.optgroup).length !== 0) {
+                if (typeof optGroups[rec.optgroup] != 'undefined') {
+                    optGroups[rec.optgroup].find('ul').append(itm.el);
+                }
+                else {
+                    holder.append(
+                        optGroups[rec.optgroup] = $('<li class="wui-optgroup-label">' +
+                            rec.optgroup + '<ul class="wui-optgroup"></ul></li>')
+                                .find('ul')
+                                    .append(itm.el)
+                                        .end()
+                    );
+                }
+            }
+            else {
+                holder.append(itm.el);
+            }
         });
 
-        // Clear out items on the DOM and add new
-        me.dd.empty().removeClass('wui-spinner').append(holder.children().unwrap());
+        // Clear out items in the drop down and add new items from wrapper.
+        // Ensure clicking on the drop down doesn't close it.
+        me.dd.empty()
+            .removeClass('wui-spinner')
+            .append(holder.children().unwrap())
+            .off('mousedown')
+            .on('mousedown', function() { 
+                me.isBlurring = false; 
+            });
 
-        // Show some feedback even with no data
+        // Show some feedback even with no data, or select current if it exists.
         if (me.data.length === 0) {
             me.dd.html(me.emptyMsg);
         }
-
-        // Make sure clicking on the drop down doesn't close it
-        me.dd.off('mousedown').on('mousedown', function() { 
-            me.isBlurring = false; 
-        });
-
-
-        // Select a pre-applied value if it exists
-        if (me.value && me.field.val().length === 0) {
-            selectedItm = me.selectBy(me.valueItem, me.value);
-        }
-    
-        if (!selectedItm && $.isPlainObject(me.value)) {
-            selectedItm = me.selectBy(me.valueItem, me.value[me.valueItem]);
-        }
-       
-        if (selectedItm) {
-            me.set();
-        }
-
-        // Necessary here because remote queries will remake the list with every keystroke and
-        // will change the size/position of the options list.
-        me.adjustDropDownSize();
-        
-        // Perform local hilighting
-        if(me.previous && me.previous.length) {
+        else {
+            me.selectCurrent();
             me.hilightText(me.previous);
         }
 
+        // Necessary here because remote queries will remake the list with every keystroke and
+        // that can change the size/position of the options list.
+        me.adjustDropDownSize();
+
         return me.items.length;
+    },
+    
+    
+    /**
+     * Method meant to be overridden. Runs when the pre-applied value for the combo is not found 
+     * in the dataset.
+     */
+    notFound:   function() {},
+    
+    
+    /**
+     * Adds the interaction listeners to passed in option list item's 'el' node.
+     *
+     * @param       {Object}    itm     A Wui Object item with an 'el' node and 'rec' data property.
+     *
+     * @returns     {Object}    The 'itm' object that was passed in.
+     */
+    optionEventListeners: function(itm) {
+        var me = this;
+        
+        itm.el.data('itm', itm)
+            .bind('touchstart', function() {
+                    me.itemSelect($(this).data('itm'));
+                    me.isBlurring = false;
+            })
+            .on({
+                mouseenter: function(event) { 
+                    event.stopPropagation();
+                    me.itemSelect($(this).data('itm')); 
+                },
+                            
+                mousedown: function(event) { 
+                    event.stopPropagation();
+                    me.isBlurring = false; 
+                },
+                            
+                click: function(event) { 
+                    event.stopPropagation();
+                    me.set(); 
+                    me.field.select();
+                    me.close();
+                }
+            });
+        
+        return itm;
     },
 
     
@@ -2247,6 +2428,106 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
         ofstP.animate( { scrollTop:offset }, 100 );
     },
+    
+    
+    /**
+     * Searches locally within the drop-down's data for the srchVal, otherwise if searchLocal
+     * is false, the data is searched remotely.
+     */
+    searchData: function() {
+        var me = this,
+            srchVal = me.field[0].value,
+            oldSearch = me.previous || undefined,
+            srchParams = {};
+
+        me.previous = srchVal;
+        if (me.searchLocal && me.total >= me.search_threshold) {
+            me.hilightText(srchVal);
+        }
+        else {
+            me.clearSelect();
+            
+            if ((srchVal.length >= me.minKeys || srchVal.length === 0) && me.previous != oldSearch) {
+                if (srchVal.length === 0) {
+                    me.val(null);
+                }
+
+                me.dd.addClass('wui-spinner');
+                srchParams[me.searchArgName] = srchVal;
+                me.loadData(srchParams);
+            }
+        }
+    },
+    
+    
+    /**
+     * Selects the list item immediately before or after the currently selected item, works on the filtered
+     * visibility if the drop down is open.
+     *
+     * @param       {Number}    dir     Direction to go to select an ajacent value [1, -1]
+     *
+     * @returns     {Object}    The selected item
+     */
+    selectAjacent: function(dir) {
+        var me = this,
+        
+            // Determine the visible elements.
+            options = me.items.map(function(itm) {
+                if (itm.rec.disabled === true || !itm.el.is(':visible')) {
+                    return undefined;
+                }
+                else {
+                    return itm.el;
+                }
+            }).filter(function(itm){
+                return (itm !== undefined);
+            }),
+            
+            // Get the index of the selected element in the current options array (if any).
+            selectedIndex = (function(selection) {
+                var retVal;
+                
+                // If there is a selected item, move from it, else go from an end.
+                if (selection.length > 0) {
+                    options.forEach(function(option, index) {
+                        if (option[0] === selection[0].el[0]) {
+                            retVal = index;
+                            
+                            // breaks loop
+                            return false;
+                        }
+                    });
+                }
+                
+                return retVal;
+            })(me.selected),
+            
+            // Determine the value of the edge depending on an arrow key.
+            theEnd = (dir > 0) ? 0 : options.length - 1,
+            itm,
+            el;
+            
+        // If the drop down was just opened, we only want to show the selected item, not change it.
+        if (me.justOpened === true) {
+            dir = 0;
+            me.justOpened = false;
+        }
+            
+        // If there is a selected item, move from it, else go from an end.
+        if ($.isNumeric(selectedIndex)) {
+            el = options[selectedIndex + dir];
+        }
+        else {
+            el = options[theEnd];
+        }
+        
+        itm = me.selectByEl(el);
+        
+        // If itm is not a Wui object, we're likely on an edge. Go to the other end of the list.
+        if (!$.isPlainObject(itm)) {
+            itm = me.selectByEl(options[theEnd]);
+        }
+    },
 
 
     /**
@@ -2286,6 +2567,31 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
         
         return retVal;
+    },
+    
+    
+    /**
+     * If there is a currently selected item, select it afresh in the new data/item-set.
+     */
+    selectCurrent: function() {
+        var me = this,
+            selectedItm;
+        
+        // Select a pre-applied value if it exists
+        if (me.value && me.field.val().length === 0) {
+            selectedItm = me.selectBy(me.valueItem, me.value);
+        }
+    
+        if (typeof selectedItm == 'undefined' && $.isPlainObject(me.value)) {
+            selectedItm = me.selectBy(me.valueItem, me.value[me.valueItem]);
+        }
+       
+        if (typeof selectedItm !== 'undefined') {
+            me.set();
+        }
+        else {
+            me.notFound();
+        }
     },
     
 
@@ -2428,57 +2734,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 UP:     38,
                 DOWN:   40
             };
-
-        /**
-         * Selects the list item immediately before or after the currently selected item, works on the filtered
-         * visibility if the drop down is open.
-         *
-         * @param       {Number}    dir     Direction to go to select an ajacent value [1, -1]
-         *
-         * @returns     {Object}    The selected item
-         */
-        function selectAjacent(dir) {
-            var selector = ':visible:not(.wui-datalist-disabled)',
-                theEnd = (dir === 1) ? ':first' : ':last',
-                fn = (dir === 1) ? 'nextAll' : 'prevAll',
-                el = me.selected.length ? me.selected[0].el[fn](selector + ':first') : me.dd.children(selector+theEnd),
-                itm = me.selected[0];
-
-            itm = me.selectByEl(el);
-            
-            // If itm is not a Wui object, we're likely on an edge. Go to the other end of the list.
-            if (!$.isPlainObject(itm)) {
-                itm = me.selectByEl(me.dd.children(selector + theEnd));
-            }
-        }
-        
-        /**
-         * Searches locally within the drop-down's data for the srchVal, otherwise if searchLocal is false,
-         * the data is searched remotely.
-         */
-        function searchData() {
-            var srchVal = me.field[0].value,
-                oldSearch = me.previous || undefined,
-                srchParams = {};
-
-            me.previous = srchVal;
-            if (me.searchLocal && me.total >= me.search_threshold) {
-                me.hilightText(srchVal);
-            }
-            else {
-                me.clearSelect();
-                
-                if ((srchVal.length >= me.minKeys || srchVal.length === 0) && me.previous != oldSearch) {
-                    if (srchVal.length === 0) {
-                        me.val(null);
-                    }
-
-                    me.dd.addClass('wui-spinner');
-                    srchParams[me.searchArgName] = srchVal;
-                    me.loadData(srchParams);
-                }
-            }
-        }
                     
         return me.field
             .on('keydown', function(event) {
@@ -2500,6 +2755,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 else {
                     // Open drop down on any keypress that isn't tab
                     if (event.keyCode != keys.SHIFT) {
+                        if (!me._open) {
+                            me.justOpened = true;
+                        }
                         me.open();
                     }
                     
@@ -2509,10 +2767,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                         
                         switch (event.keyCode) {
                             case keys.DOWN:
-                                selectAjacent(1);
+                                me.selectAjacent(1);
                                 break;
                             case keys.UP:
-                                selectAjacent(-1);
+                                me.selectAjacent(-1);
                                 break;
                             case keys.ENTER:
                                 me.set();
@@ -2537,7 +2795,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 }
                 
                 if (me.can_search && $.inArray(event.keyCode,[keys.TAB, keys.SHIFT]) == -1) {
-                    searchData();
+                    me.searchData();
                 }
             })
             .on('focus', function(event) {
