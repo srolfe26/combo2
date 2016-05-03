@@ -1,0 +1,222 @@
+/*! Combo2 0.6
+ * Copyright (c) 2016 Stephen Rolfe Nielsen
+ *
+ * https://github.com/srolfe26/combo2
+ *
+ * @license MIT 2016 Stephen Rolfe Nielsen
+ */ 
+
+.wui-hidden {
+    display: none !important;
+}
+
+.wui-form-field,
+.wui-form-field *,
+.wui-combo-dd {
+    font-family: Arial, Helvetica, Verdana, sans-serif;
+    text-decoration: none;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.wui-form-field *:focus {
+    outline: 0;
+}
+
+.wui-form-field {
+    border: 1px solid #ccc;
+    display: inline-block;
+    position: relative;
+    background-color: #fff;
+    min-width: 40px;
+}
+
+.wui-form-field.wui-has-dd-btn {
+    padding-right: 26px;
+}
+
+.wui-form-field.wui-fe-focus {
+    outline: none;
+    border: 1px solid #9ecaed;
+    -webkit-box-shadow: 0 0 3px #9ecaed;
+    -moz-box-shadow: 0 0 3px #9ecaed;
+    box-shadow: 0 0 3px #9ecaed;
+}
+
+.wui-combo-search {
+    border: 0;
+    width: 100%;
+    margin: 0;
+    height: 26px;
+    padding: 0 5px;
+}
+
+/* Gets rid of the 'X' IE 10 & 11 add to the field */
+.wui-combo-search::-ms-clear {
+    display: none;
+}
+
+.wui-combo-disabled {
+    color: #aaa;
+}
+
+.wui-button {
+    border: 0;
+    background-color: #dadada;
+}
+
+.wui-button.drop-down-switch {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    background-color: #fff;
+}
+
+.drop-down-switch:after {
+    content: "";
+    border-width: 6px;
+    border-style: solid;
+    border-color: #555 transparent transparent;
+    left: 50%;
+    top: 50%;
+    margin: -3px 0 0 -6px;
+    position: absolute;
+}
+
+/* IE8 Only uses \0screen */
+@media \0screen {
+    .drop-down-switch:after {
+        margin: -14px 0 0 -6px;
+    }
+    
+    .wui-combo-search {
+        padding-top: 5px;
+    }
+} 
+
+.drop-down-switch:hover:after {
+    border-color: #999 transparent transparent;
+}
+
+.wui-combo-dd {
+    background: #fff;
+    list-style: none;
+    margin: 0 !important;
+    padding: 0;
+    position: absolute;
+    max-height: 300px;
+    overflow: auto;
+    border: 1px #ccc solid;
+    text-align: left;
+}
+
+.wui-combo-dd.wui-spinner {
+    height: auto;
+    width: auto;
+    min-height: 26px;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.wui-combo-dd li {
+    cursor: pointer;
+    padding: 2px 5px;
+    margin: 0 !important;
+    min-height: 1em;
+    font-size: 0.9em;
+}
+
+.wui-combo-dd:empty {
+    border: 0;
+}
+
+/* Breaking many good CSS rules here, but its the only decent way to disable scrolling on the 
+body (to mimic the opening of select boxes on other browsers and prevent the dropdown being
+disassociated from the field) but retain the scrollbar (so layout of the page doesn't get 
+messed with). Specifying the body because we don't want this applied on any other elemet. */
+body.wui-combo-no-scroll {
+    position: fixed !important;
+    overflow-y: auto !important;
+}
+
+.wui-form-field, .wui-combo-searchable:before {
+    -webkit-transition: all 167ms ease-in-out;
+    -moz-transition: all 167ms ease-in-out;
+    -o-transition: all 167ms ease-in-out;
+    transition: all 167ms ease-in-out;
+}
+
+.wui-form-field.wui-combo-searchable.wui-fe-focus {
+    padding-left: 28px;
+}
+
+.wui-form-field.wui-combo-searchable.wui-fe-focus .wui-combo-search {
+    padding-left: 0;
+}
+
+.wui-combo-searchable:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAAXNSR0IArs4c6QAAAWFJREFUKBWNkr9KA0EQxt31CuGChb0QsYmQToiNlW+g2NhpyD/S5Q1OsFSCCOHuFAvTnfZWKS0V8gghmBSCRZLyyPmbsCveYdCBj9n5Zr6Z2btVK8Y8z1sbj8enhHsglyTJq9a66/v+uylJOSVRo9EozufzR44FMAAzc54qpapBEDwRp0zLJBFR4DJhPwzDPCg6jrNFZZ/J3VqtJg1Tpkej0RlMAeEJa73YbKfTGbquewQ/AZ7lrdeQJYLBT5FNttvtTyY+E8u9U6aJckDu9KvReIZ4PZsU4RsoNJvNzWwyiqJVRAfw/WxOVn2AnMZx3G21Whu2QES9Xu+SeAdcWd76xe+o1+vH8vVoMpE7mfVkkog+wAW/5AY+SQklkE9O4pxjydxJ1pNJ2+Aa3COuWPFiIuRSo4liozsKyuBb7CxVmIRMwCqIhSnzyiSu/jnRNqZYIbrFH/LCdi3/L2/EeSn+At65lAi/Iu+jAAAAAElFTkSuQmCC) no-repeat center center;
+    width: 0;
+    height: 100%;
+    opacity: 0;
+}
+
+.wui-form-field.wui-combo-searchable.wui-fe-focus:before {
+    width: 28px;
+    opacity: 100;
+}
+
+
+
+
+/************************************** Optgroup Styles *******************************************/
+.wui-optgroup-label {
+    font-style: italic;
+}
+
+.wui-optgroup {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wui-optgroup li {
+    padding-left: 1.5em;
+    font-style: normal;
+    font-size: 1em;
+}
+
+/******************************* Selection & Hilighting Styles ************************************/
+.wui-selected td,
+.wui-selected,
+.wui-sort-menu li:hover {
+    background-color: #038BE0;
+}
+
+.wui-selected,
+.wui-sort-menu li:hover {
+    color: #fff;
+}
+
+.wui-highlight {
+    text-decoration: underline !important;
+    font-weight: bold !important;
+}
+
+.wui-selected a,
+.wui-selected a:visited {
+    color: #fff;
+    background-color: transparent;
+    text-decoration: underline;
+}
+
+.wui-selected:focus {
+    outline: 0;
+}

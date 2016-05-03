@@ -2,7 +2,7 @@ var shell = require('shelljs');
 var buildJSHint = require('build-jshint');
 var UglifyJS = require("uglifyjs");
 var builder = require('wui-builder');
-var version = '0.5';
+var version = '0.6';
 
 // Perform init
 shell.rm('-rf', './dist');
