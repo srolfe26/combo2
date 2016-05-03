@@ -22,7 +22,7 @@
         <script src="../dist/combo-2.min.js"></script> -->
         
         <!-- SOURCE FILES -->
-            <link rel="stylesheet" href="../src/combo-2.css" type="text/css" media="all">
+            <link rel="stylesheet" href="../src/css/combo-2.css" type="text/css" media="all">
             <script src="../src/libs/es5-shim.js"></script>
             <script src="../src/libs/verge.js"></script>
             <script src="../src/core-methods.js"></script>
@@ -37,7 +37,7 @@
             
             <p>See the HTML source for implementation details.</p>
         
-            <h2>Standard Select</h2>
+            <h2>Standard Filterable Select</h2>
         
             <div class="col-container">
                 <div class="fifty">
@@ -100,9 +100,45 @@
                             <option value="oliver queen">Green Arrow</option>
                             <option value="barry allen">The Flash</option>
                         </optgroup>
-                    </select>                    
+                    </select>
                 </div>
             </div>
+            
+            
+            <h2>No-Filter Threshold Select</h2>
+        
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>no_filter = new Wui.Combo2({
+    searchThreshold: 7
+}, '#no_filter_target');</code></pre>
+                </div>
+                
+                <div class="fifty">
+                    <p>Makes this:</p>
+                    
+                    <select name="short_list">
+                        <option>Russ</option>
+                        <option>Dirk</option>
+                        <option>Mike</option>
+                        <option>John</option>
+                        <option>Dave</option>
+                    </select>
+
+                    <p>Become this:</p>
+                    
+                    <select name="short_list" id="no_filter_target">
+                        <option>Russ</option>
+                        <option>Dirk</option>
+                        <option>Mike</option>
+                        <option>John</option>
+                        <option>Dave</option>
+                    </select>
+                </div>
+            </div>
+            
             
             <h2>Local Dataset</h2>
             
@@ -135,6 +171,12 @@
             standard_select = new Wui.Combo2({
                 width: '100%'
             }, '#target');
+            
+            
+            // No Filter Select
+            no_filter = new Wui.Combo2({
+                searchThreshold: 7
+            }, '#no_filter_target');
             
             
             // Combo with its own dataset

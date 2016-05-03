@@ -95,7 +95,9 @@
  *     - Escape
  *         - Sets the value of the field back to its previous value, and closes the options list 
  *           if it's open.
- *     - Any other typing will cause a search of the options list.
+ *     - Any other typing will cause a search of the options list if the number of options is great
+ *       than or equal to the searchThreshold. If less than, typing will behave similar to on a 
+ *       standard select box.
  *         - Local searching (determined by the searchLocal attribute, default: true) will cause an
  *           unbounded search of the DOM text of the items in the options list.
  *         - Remote searching will send requests to the server, and will be at the mercy of the rules
@@ -149,7 +151,7 @@ Wui.Combo2 = function(args, target) {
             autocorrect:        'off',
             autocapitalize:     'off',
             spellcheck:         'false'
-        }).addClass('wui-datalist-search'),
+        }).addClass('wui-combo-search'),
         
         hiddenCls: 'wui-hidden',
         
@@ -171,7 +173,7 @@ Wui.Combo2 = function(args, target) {
         
         // Do not perform search/filtering if there are n or fewer options. Zero means the search
         // is always on
-        search_threshold: 0,
+        searchThreshold: 0,
         
         // An array of the currently selected records
         selected: [],
@@ -422,22 +424,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             // Only reselect the field in the instance that the close options list button was pressed.
             if (me.isBlurring !== undefined) {
                 me.isBlurring = true;
-                me.field.select();
+                me.field.focus().select();
                 
             }
         }
-    },
-    
-    
-    /**
-     * Clears the selection on the data list
-     */
-    clearSelect: function() {
-        var me = this;
-
-        me.dd.find('.wui-selected').removeClass('wui-selected');
-        me.selected = [];
-        me.el.trigger($.Event('wuichange'), [me, me.el, {}, me.selected]);
     },
     
     
@@ -543,22 +533,25 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * called with two parameters the item, and the item's index.
      *
      * @param   {function}  fn          Function that gets called for each item of the object.
-     * @param   {boolean}   ascending   Whether the loop happens in ascending or descending order. Defaults to true.
+     * @param   {boolean}   ascending   Whether the loop happens in ascending or descending order. 
+     *                                  Defaults to true.
      *
      * @returns {boolean}   True if the items array exists
      */
     each: function(fn, ascending) {
         var me = this,
-            i = 0;
+            i = 0,
+            arry = me.items || me;  // Allows this method to be used on regular arrays too when
+                                    // by calling each: me.each.call([], function(){...})
 
-        if (!$.isArray(me.items)) {
+        if (!$.isArray(arry)) {
             return false;
         }
 
         // ascending
         if ((ascending !== false)) {
-            for (i; i < me.items.length; i++) {
-                if(fn(me.items[i],i) === false) {
+            for (i; i < arry.length; i++) {
+                if (fn(arry[i], i) === false) {
                     break;
                 }
             }
@@ -566,8 +559,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         // descending
         else {
-            for (i = me.items.length; i >= 0; i--) {
-                if(fn(me.items[i], i) === false) {
+            for (i = arry.length; i >= 0; i--) {
+                if (fn(arry[i], i) === false) {
                     break;
                 }
             }
@@ -650,9 +643,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      */
     hilightText: function(srchVal) {
         var me = this,
-            options = me.items.map(function(itm) {
-                return itm.el;
-            }),
             hilightCls = 'wui-highlight';
 
         function clearHilight(obj) {
@@ -686,18 +676,14 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             // Un-hide all optgroups
             me.dd.find('.wui-optgroup-label.' + me.hiddenCls).removeClass(me.hiddenCls);
             
-            options.forEach(function(itm) {
-                // Search only visible text here (rather than regex'ing on the html) so we only get visible items
-                if(itm.text().toUpperCase().indexOf(srchVal.toUpperCase()) >= 0) {
-                    hilightText(itm).removeClass(me.hiddenCls);
-                }
-                else {
-                    clearHilight(itm).addClass(me.hiddenCls);
-                }
-            });
+            me.searchHTMLText(
+                srchVal,
+                function(itm) { hilightText(itm).removeClass(me.hiddenCls); },
+                function(itm) { clearHilight(itm).addClass(me.hiddenCls); }
+            );
             
             // Clear disabled items in a search
-            me.dd.children('.wui-datalist-disabled').addClass(me.hiddenCls);
+            me.dd.children('.wui-combo-disabled').addClass(me.hiddenCls);
             
             // Clear any optgroups that don't have visible items in them
             me.dd.children('.wui-optgroup-label').each(function() {
@@ -942,7 +928,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 me.optionEventListeners(itm);
             }
             else {
-                itm.el.addClass('wui-datalist-disabled');
+                itm.el.addClass('wui-combo-disabled');
             }
             
             // Put item into optgroups if necessary 
@@ -964,6 +950,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 holder.append(itm.el);
             }
         });
+        
+        me.toggleFieldSearchability();
 
         // Clear out items in the drop down and add new items from wrapper.
         // Ensure clicking on the drop down doesn't close it.
@@ -1015,9 +1003,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     me.isBlurring = false;
             })
             .on({
-                mouseenter: function(event) { 
+                mousemove: function(event) { 
                     event.stopPropagation();
-                    me.itemSelect($(this).data('itm')); 
+                    if (me.selected[0].el[0] !== this) {
+                        me.itemSelect($(this).data('itm')); 
+                    }
                 },
                             
                 mousedown: function(event) { 
@@ -1027,8 +1017,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                             
                 click: function(event) { 
                     event.stopPropagation();
-                    me.set(); 
-                    me.field.select();
+                    me.set();
                     me.close();
                 }
             });
@@ -1058,7 +1047,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             });
             
             me.sizeAndPositionDD();
-            me.field.select();
+            me.field.focus().select();
         }
     },
     
@@ -1089,27 +1078,51 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      */
     searchData: function() {
         var me = this,
-            srchVal = me.field[0].value,
+            srchVal = $.trim(me.field[0].value),
             oldSearch = me.previous || undefined,
             srchParams = {};
 
         me.previous = srchVal;
-        if (me.searchLocal && me.total >= me.search_threshold) {
+        
+        if (me.searchLocal) {
             me.hilightText(srchVal);
         }
         else {
-            me.clearSelect();
-            
             if ((srchVal.length >= me.minKeys || srchVal.length === 0) && me.previous != oldSearch) {
-                if (srchVal.length === 0) {
-                    me.val(null);
-                }
-
                 me.dd.addClass('wui-spinner');
                 srchParams[me.searchArgName] = srchVal;
                 me.loadData(srchParams);
             }
         }
+    },
+    
+    
+    /**
+     * Performs an unbound search for the search term (srchVal) within the options list and retuns
+     * arrays of those elements matched, and those not matched.
+     *
+     * @param   {string}        srchVal     A search term
+     * @param   {function}      foundFn     Function that accepts the DOM node of the item as a parameter
+     *                                      when text is found in the node.
+     * @param   {function}      absentFn    Function that accepts the DOM node of the item as a parameter
+     *                                      when text is absent in the node.
+     */
+    searchHTMLText: function(srchVal, foundFn, absentFn) {
+        var me = this,
+            options = me.items.map(function(itm) {
+                return itm.el;
+            });
+            
+        me.each.call(options, function(itm) {
+            // Search only visible text here (rather than regex'ing on the html) so we only get visible items
+            // Also allows us to use pseudo-classes to add non-searchable text.
+            if(itm.text().toUpperCase().indexOf(srchVal.toUpperCase()) >= 0 && typeof foundFn == 'function') {
+                return foundFn(itm);
+            }
+            else if (typeof absentFn == 'function') {
+                return absentFn(itm);
+            }
+        });
     },
     
     
@@ -1392,6 +1405,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             .on('keydown', function(event) {
                 event.stopPropagation();
                 
+                // When the field is readonly, don't perform default for any keys
+                if (me.items.length < me.searchThreshold && event.keyCode != keys.TAB) {
+                    event.preventDefault();
+                }
+                
                 // So shift-tabbing out of a field and going back to it doesn't result in the 
                 // field being needlessly filtered
                 if (event.keyCode == keys.SHIFT) {
@@ -1440,6 +1458,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 }
             })
             .on('keyup', function(event) {
+                var key = null;
+                
                 event.stopPropagation();
                 
                 if (event.keyCode == keys.ENTER) {  // enter
@@ -1448,7 +1468,38 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 }
                 
                 if (me.can_search && $.inArray(event.keyCode,[keys.TAB, keys.SHIFT]) == -1) {
-                    me.searchData();
+                    if (me.total >= me.searchThreshold) {
+                        me.searchData();
+                    }
+                    // When not filtering, we want to behave like a standard select box and jump
+                    // to the item in the select that matches the filter
+                    else {
+                        // Get the character of the key being pressed
+                        if (event.which !== 0 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                            key = String.fromCharCode(event.which);
+                            
+                            if (typeof me.selectTypeBuffer == 'undefined') {
+                                me.selectTypeBuffer = key;
+                                
+                                // This buffer should only last for a second, then it will clear.
+                                // Allows a user to quickly type out the first few characters of an
+                                // option item and have the combo move the selection to them.
+                                setTimeout(function(){
+                                    me.selectTypeBuffer = undefined;
+                                }, 1000);
+                            }
+                            else {
+                                // If the user presses multiple keys under a second, use them all
+                                // to search
+                                me.selectTypeBuffer += key;
+                            }
+                            
+                            me.searchHTMLText(me.selectTypeBuffer, function(itm) {
+                                me.selectByEl(itm);
+                            });
+                        }
+                    }
+                    
                 }
             })
             .on('focus', function(event) {
@@ -1525,6 +1576,22 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         if ($.isPlainObject(me.value)) {
             me.getItemBy(me.valueItem, me.value[me.valueItem]);
             me.scrollToCurrent();
+        }
+    },
+    
+    /**
+     *
+     */
+    toggleFieldSearchability: function() {
+        var me = this;
+        
+        if (me.items.length >= me.searchThreshold) {
+            me.el.addClass('wui-combo-searchable');
+            me.field.prop('readonly', false);
+        }
+        else {
+            me.el.removeClass('wui-combo-searchable');
+            me.field.prop('readonly', true);
         }
     },
 

@@ -104,7 +104,7 @@ buildJSHint(files, opts, function(err, hasError) {
     });
 
     /********************************************** CSS ***********************************************/
-    builder.cssMinify('./src/combo-2.css', './dist/css/combo-2.css', './src/');
+    builder.cssMinify('./src/css/combo-2.css', './dist/css/combo-2.css', './src/css/');
 
     if (hasError === true) {
         console.log('---------------------------------------------------------------------------');

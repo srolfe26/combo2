@@ -1,11 +1,3 @@
-/*! Combo2 0.5
- * Copyright (c) 2016 Stephen Rolfe Nielsen
- *
- * https://github.com/srolfe26/combo2
- *
- * @license MIT 2016 Stephen Rolfe Nielsen
- */ 
-
 .wui-hidden {
     display: none !important;
 }
@@ -29,6 +21,7 @@
     display: inline-block;
     position: relative;
     background-color: #fff;
+    min-width: 40px;
 }
 
 .wui-form-field.wui-has-dd-btn {
@@ -38,10 +31,12 @@
 .wui-form-field.wui-fe-focus {
     outline: none;
     border: 1px solid #9ecaed;
+    -webkit-box-shadow: 0 0 3px #9ecaed;
+    -moz-box-shadow: 0 0 3px #9ecaed;
     box-shadow: 0 0 3px #9ecaed;
 }
 
-.wui-datalist-search {
+.wui-combo-search {
     border: 0;
     width: 100%;
     margin: 0;
@@ -49,7 +44,12 @@
     padding: 0 5px;
 }
 
-.wui-datalist-disabled {
+/* Gets rid of the 'X' IE 10 & 11 add to the field */
+.wui-combo-search::-ms-clear {
+    display: none;
+}
+
+.wui-combo-disabled {
     color: #aaa;
 }
 
@@ -84,7 +84,7 @@
         margin: -14px 0 0 -6px;
     }
     
-    .wui-datalist-search {
+    .wui-combo-search {
         padding-top: 5px;
     }
 } 
@@ -131,8 +131,41 @@ disassociated from the field) but retain the scrollbar (so layout of the page do
 messed with). Specifying the body because we don't want this applied on any other elemet. */
 body.wui-combo-no-scroll {
     position: fixed !important;
-    overflow-y: scroll !important;
+    overflow-y: auto !important;
 }
+
+.wui-form-field, .wui-combo-searchable:before {
+    -webkit-transition: all 167ms ease-in-out;
+    -moz-transition: all 167ms ease-in-out;
+    -o-transition: all 167ms ease-in-out;
+    transition: all 167ms ease-in-out;
+}
+
+.wui-form-field.wui-combo-searchable.wui-fe-focus {
+    padding-left: 28px;
+}
+
+.wui-form-field.wui-combo-searchable.wui-fe-focus .wui-combo-search {
+    padding-left: 0;
+}
+
+.wui-combo-searchable:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: url('ic_search_darkgrey_18.png?embed') no-repeat center center;
+    width: 0;
+    height: 100%;
+    opacity: 0;
+}
+
+.wui-form-field.wui-combo-searchable.wui-fe-focus:before {
+    width: 28px;
+    opacity: 100;
+}
+
+
 
 
 /************************************** Optgroup Styles *******************************************/
