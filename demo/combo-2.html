@@ -140,6 +140,43 @@
             </div>
             
             
+            <h2>Multiple</h2>
+        
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code></code></pre>
+                </div>
+                
+                <div class="fifty">
+                    <p>Makes this:</p>
+                    
+                    <select multiple name="multiple">
+                        <option>Red</option>
+                        <option>Orange</option>
+                        <option>Yellow</option>
+                        <option>Green</option>
+                        <option>Blue</option>
+                        <option>Indigo</option>
+                        <option>Violet</option>
+                    </select>
+
+                    <p>Become this:</p>
+                    
+                    <select multiple name="multiple_too" id="multiple_target">
+                        <option>Red</option>
+                        <option>Orange</option>
+                        <option>Yellow</option>
+                        <option>Green</option>
+                        <option>Blue</option>
+                        <option>Indigo</option>
+                        <option>Violet</option>
+                    </select>
+                </div>
+            </div>
+            
+            
             <h2>Local Dataset</h2>
             
             <div class="col-container">
@@ -177,6 +214,12 @@
             no_filter = new Wui.Combo2({
                 searchThreshold: 7
             }, '#no_filter_target');
+            
+            
+            // Multiple Select
+            standard_select = new Wui.Combo2({
+                width: '100%'
+            }, '#multiple_target');
             
             
             // Combo with its own dataset
