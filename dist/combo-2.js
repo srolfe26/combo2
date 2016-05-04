@@ -1483,7 +1483,7 @@ Wui.Combo2 = function(args, target) {
         ddCls: '',
         
         // Attributes to set on the object - good for setting 'data-' items
-        attr:   {},
+        attr: {},
 
         // The message to display when a search yields no results, whether local or remote. May be
         // a plain text string, or HTML formatted.
@@ -1531,7 +1531,7 @@ Wui.Combo2 = function(args, target) {
         
         // The HTML template that the data will fit into. Null value will cause an error to be 
         // thrown. Specification required.
-        template:   null,
+        template: null,
         
         // Object containing functions that will be utilized by a specified template. These functions
         // become members of Combo2.engine.
@@ -1540,18 +1540,16 @@ Wui.Combo2 = function(args, target) {
         // The name of the part of the data containing the value that will be shown to the user.
         // For example: if the data is US states: [{state_id: 1, state_name:"Alabama"}, ...]
         // the titleItem will be 'state_name'. titleItem is REQUIRED.
-        titleItem:  null,
+        titleItem: null,
 
         // The value part of the data that will be used/stored by the program.
         // For example: if the data is US states: [{state_id: 1, state_name:"Alabama"}, ...]
         // the valueItem will be 'state_id'. valueItem is REQUIRED.
-        valueItem:  null
+        valueItem: null
     }, args, {
         // Determies whether multiple selections can be made. At this time, on this control, 
         // multiselect is not available.
-        // TODO: (sn) When adding the ability to consume <select> fields, if the select is a multiple,
-        // bring in the Wui.Multiple
-        multiSelect:false
+        multiSelect: false
     });
     
     this.init(target);
@@ -1680,7 +1678,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             if ((typeof attributeVal == 'string' || typeof attributeVal == 'number')) {
                 // Just for this implementation of Wui.Combo2
                 if (html_attr == 'name') {
-                    me.hidden_field.attr(html_attr, attributeVal);
+                    me.selectTag.attr(html_attr, attributeVal);
                 }
                 else {
                     attributesToApply[html_attr] = attributeVal;
@@ -1717,7 +1715,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         var me = this;
 
         // Add an object observer on the select box so that value changes translate well
-        me.selectTag = me.selectObserver($(select));
+        me.selectObserver($(select));
         
         // Add listeners to mirror events between combo and select
         select.on({
@@ -1753,6 +1751,66 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 
             select.val(setSelect);
         });  
+    },
+
+
+    /**
+     * Builds the combo and positions it on the DOM based on the selectTag target passed 
+     * to the combo.
+     */
+    buildComboFromSelect: function() {
+        var me = this;
+        
+        // Hide select box and replace it with the Combo2. Apply styles.
+        me.selectTag.after(me.el).addClass(me.hiddenCls).prependTo(me.el);
+        me.attachToElement(me.selectTag);
+        me.cssByParam();
+        
+        // Default data model returned from Wui.parseOptions();
+        me.valueItem =  'value';
+        me.titleItem =  'label';
+        
+        // If the user hasn't defined a template, provide a default
+        if (!me.template) {
+            // No sense escaping the HTML here, because if you're getting injection at the
+            // HTML level, it has already occurred.
+            me.engine.html = me.template = '<li>{label}</li>';
+        }
+        
+        // Get data from the select
+        me.setData(Wui.parseSelect(me.selectTag));
+        
+        // Set value of Wui field to selected value
+        me.val(me.selectTag.val(), false);
+    },
+    
+    
+    /**
+     * Builds the combo from config parameters set on the Combo.
+     */
+    buildComboFromJS: function() {
+        var me = this;
+        
+        // Create template if one hasn't been defined
+        if (!(me.hasOwnProperty('template') && me.template !== null && me.template !== undefined) &&
+            me.hasOwnProperty('valueItem') &&
+            me.hasOwnProperty('titleItem') &&
+            me.valueItem &&
+            me.titleItem
+        ) {
+            me.engine.html = me.template = '<li>{' +me.titleItem+ '|escape:html}</li>';
+        }
+
+        // Ensure that all required items are present
+        if (!me.template) {
+            throw new Error('Wui.js - valueItem and titleItem, or template, are required configs for a Combo.');
+        }
+
+        // Attach the target to a config based location
+        me.addToDOM();
+
+        // Loads data per the method appropriate for the config object
+        me.getSrcData();
     },
 
 
@@ -2055,91 +2113,66 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
 
     /**
-     * Init will setup the control and fires the methods that will get data and create the options list
+     * Init sets variables needed for the combo and its methods to function, as well as setting
+     * the initial state of the field based on configs.
      *
-     * @param   {Node}  target  A DOM node, jQuery object, or selectot string for a target item on the DOM
+     * @param   {Node}  target  A DOM node, jQuery object, or selectot string for a target select 
+     *                          tag on the DOM.
      */
     init: function(target) {
         var me = this;
             
-        // Create template engine and add applicable functions
-        me.engine = new Wui.Smarty($.extend({html: me.template}, me.templateFn));
-        
-        // Set remote configs
-        me.searchLocal = (me.url === null || me.autoLoad === true);
-
-        // Set initial value
-        me.value = me.hasOwnProperty('value') ? me.value : null;
+        me.selectTag = (typeof target != 'undefined') ? $(target) : undefined;    
             
-        // Build the field
-        me.el = $('<div>').addClass('wui-form-field').append(
-            me._setListeners()
-        );
-        me.setPlaceholder(me.placeholder);
-        
-        // Add drop down button
-        me.el.append(
-            me.createOptionListToggle()    
-        );
-        
+        $.extend(me, {
+                            // Build the field.
+            el:             $('<div>').addClass('wui-form-field').append(
+                                me._setListeners()
+                            ),
+            
+                            // Create template engine and add applicable functions.
+            engine:         new Wui.Smarty($.extend({html: me.template}, me.templateFn)),
+            
+                            // Used to tie the drop down and focus events back to the parent field.
+            idCls:          me.selectTag ? Wui.id(me.selectTag.attr('name')) : Wui.id(),
+            
+                            // If the user didn't specify multiselect, check the underlying select.
+            multiSelect:    (me.multiSelect === true || (me.selectTag && me.selectTag.prop('multiple') === true)),
+                            
+                            // Set remote configs.
+            searchLocal:    (me.url === null || me.autoLoad === true),
+            
+                            // Set initial value.
+            value:          me.hasOwnProperty('value') ? me.value : null
+        });
+
         // Create dropdown container.
         $('body').append(
             me.dd = $('<ul>').addClass('wui-combo-dd ' + me.hiddenCls + ' ' + me.ddCls)
         );
         
-        // Attach the combo to a specified target
-        if (typeof target != 'undefined') {
-            target = $(target);
-
-            me.idCls = Wui.id(target.attr('name'));
-
-            // Hide select box and replace it with the Combo2. Apply styles.
-            me.hidden_field = target.after(me.el).addClass(me.hiddenCls).prependTo(me.el);
-            me.attachToElement(target);
-            me.cssByParam();
-            
-            // Default data model returned from Wui.parseOptions();
-            me.valueItem =  'value';
-            me.titleItem =  'label';
-            
-            // If the user hasn't defined a template, provide a default
-            if (!me.template) {
-                // No sense escaping the HTML here, because if you're getting injection at the
-                // HTML level, it has already occurred.
-                me.engine.html = me.template = '<li>{label}</li>';
-            }
-            
-            me.setData(Wui.parseSelect(target));
-            
-            // Set value of Wui field to selected value
-            me.val(target.val(), false);
+        // Placeholder text should be set before the combo is build because if a disabled option
+        // is set selected on the combo, that will be made the placeholder text, and this would
+        // override that.
+        me.setPlaceholder(me.placeholder);
+        
+        // Add field elements before the 'build' steps because they include making the options
+        // drop down which may take a long time to render, and we want the field to get its
+        // appearance quickly.
+        me.el
+            .addClass('wui-combo ' + me.idCls)
+            .append(
+            // Add drop down button per configs
+            me.createOptionListToggle()
+        );
+        
+        // Build the combo box
+        if (me.selectTag) {
+            me.buildComboFromSelect();
         }
-    
-        // Attach the target to a config based location
         else {
-            // Create template if one hasn't been defined
-            if (!(me.hasOwnProperty('template') && me.template !== null && me.template !== undefined) &&
-                me.hasOwnProperty('valueItem') &&
-                me.hasOwnProperty('titleItem') &&
-                me.valueItem &&
-                me.titleItem
-            ) {
-                me.engine.html = me.template = '<li>{' +me.titleItem+ '|escape:html}</li>';
-            }
-
-            // Ensure that all required items are present
-            if (!me.template) {
-                throw new Error('Wui.js - valueItem and titleItem, or template, are required configs for a Combo.');
-            }
-
-            me.idCls = Wui.id();
-            me.addToDOM();
-
-            // Loads data per the method appropriate for the config object
-            this.getSrcData();
+            me.buildComboFromJS();
         }
-
-        me.el.addClass('wui-combo ' + me.idCls);
     },
     
 
@@ -2352,8 +2385,13 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             .on({
                 mousemove: function(event) { 
                     event.stopPropagation();
+                    
+                    if (typeof me.selected[0] == 'undefined') {
+                        me.itemSelect($(this).data('itm'));
+                    }
+                    
                     if (me.selected[0].el[0] !== this) {
-                        me.itemSelect($(this).data('itm')); 
+                        me.itemSelect($(this).data('itm'));
                     }
                 },
                             
@@ -2752,26 +2790,27 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             .on('keydown', function(event) {
                 event.stopPropagation();
                 
-                // When the field is readonly, don't perform default for any keys
+                // When the field is readonly, don't perform default for any keys except tab so
+                // that behavoirs like backspace causing page navigation don't occur.
                 if (me.items.length < me.searchThreshold && event.keyCode != keys.TAB) {
                     event.preventDefault();
                 }
                 
                 // So shift-tabbing out of a field and going back to it doesn't result in the 
-                // field being needlessly filtered
+                // field being needlessly filtered.
                 if (event.keyCode == keys.SHIFT) {
                     return false;
                 }
                 
                 // So tabbing off of the field will select the last selected option and not get
-                // confused by the mouse hovering over an item
+                // confused by the mouse hovering over an item.
                 if (event.keyCode == keys.TAB) {
                     if (!me._open) {
                         me.set();
                     }
                 }
                 else {
-                    // Open drop down on any keypress that isn't tab
+                    // Open drop down on any keypress that isn't tab.
                     if (event.keyCode != keys.SHIFT) {
                         if (!me._open) {
                             me.justOpened = true;
@@ -2799,7 +2838,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                         }
                     }
                     else {
-                        // for ie8's lack of 'input' support
+                        // for ie8's lack of 'input' support.
                         me.can_search = true;
                     }
                 }
@@ -2809,7 +2848,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 
                 event.stopPropagation();
                 
-                if (event.keyCode == keys.ENTER) {  // enter
+                if (event.keyCode == keys.ENTER) {
                     event.preventDefault(); 
                     me.set();
                 }
@@ -2882,6 +2921,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     },
 
 
+    /**
+     * Sets a placeholder on the field.
+     */
     setPlaceholder: function(placeholder) {
         var me = this;
         
@@ -2927,7 +2969,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     },
     
     /**
-     *
+     * If the items in the options list are fewer than the searchThreshold, the field is made 
+     * readonly so that filtering cannot be performed. However, typing in the field still causes
+     * the selection to move to an option containing a typed value. The CSS definition of 
+     * 'wui-combo-searchable' toggles a search icon. 
      */
     toggleFieldSearchability: function() {
         var me = this;
