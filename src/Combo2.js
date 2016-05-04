@@ -709,21 +709,34 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             }).end();
         }
 
-        function hilightText(obj){
+        function addHilight(text) {
+            return text.replace( new RegExp(srchVal, "ig"), function(m) {
+                return '<span class="' +hilightCls+ '">' +m+ '</span>';
+            });
+        }
+
+        function hilightText(obj) {
             clearHilight(obj);
 
-            // Recurse so we're only acting on leaf nodes and don't mess up the template
             if (obj.children().length) {
+                var text_node = obj.contents().filter(function() { 
+                  return (this.nodeType == 3 && this.nodeValue.replace(/^\s+|\s+$/g, '').length > 0);
+                })[0];
+                
+                // An element may have both child nodes and text nodes. We want to hilight
+                // within all of them. This is essentially a leaf off a big branch.
+                if (text_node) {
+                    $(text_node).replaceWith($.parseHTML(addHilight(text_node.nodeValue)));
+                }
+                
+                // Recurse so we're only acting on leaf nodes and don't mess up the template
                 obj.children().each(function() {
                     hilightText($(this));
                 });
             }
             else {
-                obj.html(
-                    obj.text().replace( new RegExp(srchVal, "ig"), function(m){
-                        return '<span class="' +hilightCls+ '">' +m+ '</span>';
-                    })
-                );
+                // Here we are at a leaf node
+                obj.html(addHilight(obj.text()));
             }
 
             return obj;
@@ -829,6 +842,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         else {
             me.buildComboFromJS();
         }
+        
+        me.toggleFieldSearchability();
     },
     
 
@@ -986,8 +1001,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 holder.append(itm.el);
             }
         });
-        
-        me.toggleFieldSearchability();
 
         // Clear out items in the drop down and add new items from wrapper.
         // Ensure clicking on the drop down doesn't close it.
@@ -1004,13 +1017,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             me.dd.html(me.emptyMsg);
         }
         else {
-            me.selectCurrent();
             me.hilightText(me.previous);
         }
 
         // Necessary here because remote queries will remake the list with every keystroke and
         // that can change the size/position of the options list.
-        me.adjustDropDownSize();
+        me.sizeAndPositionDD();
 
         return me.items.length;
     },
