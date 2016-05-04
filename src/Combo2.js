@@ -408,6 +408,66 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
 
     /**
+     * Builds the combo and positions it on the DOM based on the selectTag target passed 
+     * to the combo.
+     */
+    buildComboFromSelect: function() {
+        var me = this;
+        
+        // Hide select box and replace it with the Combo2. Apply styles.
+        me.selectTag.after(me.el).addClass(me.hiddenCls).prependTo(me.el);
+        me.attachToElement(me.selectTag);
+        me.cssByParam();
+        
+        // Default data model returned from Wui.parseOptions();
+        me.valueItem =  'value';
+        me.titleItem =  'label';
+        
+        // If the user hasn't defined a template, provide a default
+        if (!me.template) {
+            // No sense escaping the HTML here, because if you're getting injection at the
+            // HTML level, it has already occurred.
+            me.engine.html = me.template = '<li>{label}</li>';
+        }
+        
+        // Get data from the select
+        me.setData(Wui.parseSelect(me.selectTag));
+        
+        // Set value of Wui field to selected value
+        me.val(me.selectTag.val(), false);
+    },
+    
+    
+    /**
+     * Builds the combo from config parameters set on the Combo.
+     */
+    buildComboFromJS: function() {
+        var me = this;
+        
+        // Create template if one hasn't been defined
+        if (!(me.hasOwnProperty('template') && me.template !== null && me.template !== undefined) &&
+            me.hasOwnProperty('valueItem') &&
+            me.hasOwnProperty('titleItem') &&
+            me.valueItem &&
+            me.titleItem
+        ) {
+            me.engine.html = me.template = '<li>{' +me.titleItem+ '|escape:html}</li>';
+        }
+
+        // Ensure that all required items are present
+        if (!me.template) {
+            throw new Error('Wui.js - valueItem and titleItem, or template, are required configs for a Combo.');
+        }
+
+        // Attach the target to a config based location
+        me.addToDOM();
+
+        // Loads data per the method appropriate for the config object
+        me.getSrcData();
+    },
+
+
+    /**
      * Closes the drop-down menu and restores the body to whatever scroll state it was in previously.
      */
     close: function() { 
@@ -705,63 +765,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     },
 
 
-    buildComboFromSelect: function() {
-        var me = this;
-        
-        // Hide select box and replace it with the Combo2. Apply styles.
-        me.selectTag.after(me.el).addClass(me.hiddenCls).prependTo(me.el);
-        me.attachToElement(me.selectTag);
-        me.cssByParam();
-        
-        // Default data model returned from Wui.parseOptions();
-        me.valueItem =  'value';
-        me.titleItem =  'label';
-        
-        // If the user hasn't defined a template, provide a default
-        if (!me.template) {
-            // No sense escaping the HTML here, because if you're getting injection at the
-            // HTML level, it has already occurred.
-            me.engine.html = me.template = '<li>{label}</li>';
-        }
-        
-        // Get data from the select
-        me.setData(Wui.parseSelect(me.selectTag));
-        
-        // Set value of Wui field to selected value
-        me.val(me.selectTag.val(), false);
-    },
-    
-    
-    buildComboFromJS: function() {
-        var me = this;
-        
-        // Create template if one hasn't been defined
-        if (!(me.hasOwnProperty('template') && me.template !== null && me.template !== undefined) &&
-            me.hasOwnProperty('valueItem') &&
-            me.hasOwnProperty('titleItem') &&
-            me.valueItem &&
-            me.titleItem
-        ) {
-            me.engine.html = me.template = '<li>{' +me.titleItem+ '|escape:html}</li>';
-        }
-
-        // Ensure that all required items are present
-        if (!me.template) {
-            throw new Error('Wui.js - valueItem and titleItem, or template, are required configs for a Combo.');
-        }
-
-        // Attach the target to a config based location
-        me.addToDOM();
-
-        // Loads data per the method appropriate for the config object
-        me.getSrcData();
-    },
-
-
     /**
-     * Init will setup the control and fires the methods that will get data and create the options list
+     * Init sets variables needed for the combo and its methods to function, as well as setting
+     * the initial state of the field based on configs.
      *
-     * @param   {Node}  target  A DOM node, jQuery object, or selectot string for a target item on the DOM
+     * @param   {Node}  target  A DOM node, jQuery object, or selectot string for a target select 
+     *                          tag on the DOM.
      */
     init: function(target) {
         var me = this;
@@ -795,6 +804,21 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             me.dd = $('<ul>').addClass('wui-combo-dd ' + me.hiddenCls + ' ' + me.ddCls)
         );
         
+        // Placeholder text should be set before the combo is build because if a disabled option
+        // is set selected on the combo, that will be made the placeholder text, and this would
+        // override that.
+        me.setPlaceholder(me.placeholder);
+        
+        // Add field elements before the 'build' steps because they include making the options
+        // drop down which may take a long time to render, and we want the field to get its
+        // appearance quickly.
+        me.el
+            .addClass('wui-combo ' + me.idCls)
+            .append(
+            // Add drop down button per configs
+            me.createOptionListToggle()
+        );
+        
         // Build the combo box
         if (me.selectTag) {
             me.buildComboFromSelect();
@@ -802,15 +826,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         else {
             me.buildComboFromJS();
         }
-
-        me.el
-            .addClass('wui-combo ' + me.idCls)
-            .append(
-            // Add drop down button per configs
-            me.createOptionListToggle()
-        );
-            
-        me.setPlaceholder(me.placeholder);
     },
     
 
