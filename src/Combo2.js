@@ -1448,7 +1448,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 
                 // When the field is readonly, don't perform default for any keys except tab so
                 // that behavoirs like backspace causing page navigation don't occur.
-                if (me.items.length < me.searchThreshold && me.url === null && event.keyCode != keys.TAB) {
+                if (me.items.length < me.searchThreshold && me.searchLocal && event.keyCode != keys.TAB) {
                     event.preventDefault();
                 }
                 
@@ -1510,7 +1510,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 }
                 
                 if (me.can_search && $.inArray(event.keyCode,[keys.TAB, keys.SHIFT]) == -1) {
-                    if (me.total >= me.searchThreshold || me.url) {
+                    if (me.total >= me.searchThreshold || !me.searchLocal) {
                         me.searchData();
                     }
                     // When not filtering, we want to behave like a standard select box and jump
@@ -1633,7 +1633,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     toggleFieldSearchability: function() {
         var me = this;
         
-        if (me.items.length >= me.searchThreshold || me.url) {
+        if (me.items.length >= me.searchThreshold || !me.searchLocal) {
             me.el.addClass('wui-combo-searchable');
             me.field.prop('readonly', false);
         }
