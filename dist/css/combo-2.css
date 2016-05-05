@@ -1,10 +1,33 @@
-/*! Combo2 0.6
+/*! Combo2 0.8
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
  *
  * @license MIT 2016 Stephen Rolfe Nielsen
  */ 
+
+@-webkit-keyframes wui-spin {
+    /* Don't start turning until 10% because the browser is slow to swap images and we don't
+    want a jittery/spinning search icon */
+    10% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg)
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg)
+    }
+}
+@keyframes wui-spin {
+    10% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg)
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg)
+    }
+}
 
 .wui-hidden {
     display: none !important;
@@ -131,15 +154,12 @@
 
 .wui-combo-dd:empty {
     border: 0;
+    background: transparent;
 }
 
-/* Breaking many good CSS rules here, but its the only decent way to disable scrolling on the 
-body (to mimic the opening of select boxes on other browsers and prevent the dropdown being
-disassociated from the field) but retain the scrollbar (so layout of the page doesn't get 
-messed with). Specifying the body because we don't want this applied on any other elemet. */
-body.wui-combo-no-scroll {
-    position: fixed !important;
-    overflow-y: auto !important;
+.wui-combo-dd li:empty:before {
+    content: '(none)';
+    color: #B2B2B2;
 }
 
 .wui-form-field, .wui-combo-searchable:before {
@@ -168,12 +188,25 @@ body.wui-combo-no-scroll {
     opacity: 0;
 }
 
+.wui-combo-searchable.wui-loading:before {
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTExIDc5LjE1ODMyNSwgMjAxNS8wOS8xMC0wMToxMDoyMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTUgTWFjaW50b3NoIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjg4QkE1Njg3MEEzMDExRTY4OTEzOUYxQjJDRTdBOTg2IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjg4QkE1Njg4MEEzMDExRTY4OTEzOUYxQjJDRTdBOTg2Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6ODhCQTU2ODUwQTMwMTFFNjg5MTM5RjFCMkNFN0E5ODYiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6ODhCQTU2ODYwQTMwMTFFNjg5MTM5RjFCMkNFN0E5ODYiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz77KyX9AAACh0lEQVR42lyTvWtTYRTG33t7kzQfbdM2Q9NihrQ6+AfoJgpSalFwcBHEQZyNOkjBQYWCg+BHce0iDkrBxUEjdHDU3eEKTSqpko82SdM0adIk9fldekG8cJKb95zznOd5zhurWq2abrdr6vW6cRzHtNvtU4q7ej+RSCSuDg0NDcrl8rvDw8NmOBx+rvjR6/XM2NiYCYVCxjk6OjIqMjx7e3tPm83m0sHBgYlGo8ayrD7nnU5nXrm4gG+Njo6uCCRDD702L0xWwdrOzs7SYDAA/e3ExMR5mvv9vhkfH1+Mx+Or/FbNHbH95PdZUC8Wi48LhcKjQCBA84KmZ4PBoLFt2wDIA22xO6f6L5ITmpmZWZmens5YGxsbya2trT9MSqfTF6VrXVMMAMPDwx5NNSDDiBXvZ3K53DfOU6nUSVvUM5io5AdNX4eFNHpT5YEXFGMYtEdGRr5PTk6uwqjRaDywhXyFhJpeiiJeeIUAwQoJaCX29/e9vMBek8dcR0Vz0NWUAjR9zTxMhsG/zzHob3r0nnKoI0EjSZp8+j7I/98KH3XAGl08EKU0lyMSiRjt2pPg60cSZ35O01Ow1ZZ+2dL+kcmtVuse5nGBSHKZWCMgukDebQWAUG0GE7WlrK0LsoKe7e3ty7u7u/OAYZS/AQIGnCFTRp+tVCo3MFWbe2brozw1NfWE5ObmZrZUKi0CSAEMCABYoxov5PP5rwxJJpOvtM68xWpodl13rVarXaMxFou9l5w38uHn8UWaU1zX3m9yqeTV59nZ2UueRB16APrHsedlxUP0kvSN5DdTYSGPXijuY7gnEQAMAYCrK/PS0ntbDQs6P82uxMqVjKyYrYqZi8EAwPavAAMAZamU0RhOKqIAAAAASUVORK5CYII=) no-repeat center center;
+    -webkit-animation: wui-spin 2s infinite linear;
+    animation: wui-spin 2s infinite linear
+}
+
 .wui-form-field.wui-combo-searchable.wui-fe-focus:before {
     width: 28px;
     opacity: 100;
 }
 
-
+/* Breaking many good CSS rules here, but its the only decent way to disable scrolling on the 
+body (to mimic the opening of select boxes on other browsers and prevent the dropdown being
+disassociated from the field) but retain the scrollbar (so layout of the page doesn't get 
+messed with). Specifying the body because we don't want this applied on any other elemet. */
+body.wui-combo-no-scroll {
+    position: fixed !important;
+    overflow-y: auto !important;
+}
 
 
 /************************************** Optgroup Styles *******************************************/

@@ -288,7 +288,7 @@ if (!Array.prototype.filter) {
  */
 !function(a,b,c){"undefined"!=typeof module&&module.exports?module.exports=c():a[b]=c()}(this,"verge",function(){function a(){return{width:k(),height:l()}}function b(a,b){var c={};return b=+b||0,c.width=(c.right=a.right+b)-(c.left=a.left-b),c.height=(c.bottom=a.bottom+b)-(c.top=a.top-b),c}function c(a,c){return a=a&&!a.nodeType?a[0]:a,a&&1===a.nodeType?b(a.getBoundingClientRect(),c):!1}function d(b){b=null==b?a():1===b.nodeType?c(b):b;var d=b.height,e=b.width;return d="function"==typeof d?d.call(b):d,e="function"==typeof e?e.call(b):e,e/d}var e={},f="undefined"!=typeof window&&window,g="undefined"!=typeof document&&document,h=g&&g.documentElement,i=f.matchMedia||f.msMatchMedia,j=i?function(a){return!!i.call(f,a).matches}:function(){return!1},k=e.viewportW=function(){var a=h.clientWidth,b=f.innerWidth;return b>a?b:a},l=e.viewportH=function(){var a=h.clientHeight,b=f.innerHeight;return b>a?b:a};return e.mq=j,e.matchMedia=i?function(){return i.apply(f,arguments)}:function(){return{}},e.viewport=a,e.scrollX=function(){return f.pageXOffset||h.scrollLeft},e.scrollY=function(){return f.pageYOffset||h.scrollTop},e.rectangle=c,e.aspect=d,e.inX=function(a,b){var d=c(a,b);return!!d&&d.right>=0&&d.left<=k()},e.inY=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.top<=l()},e.inViewport=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.right>=0&&d.top<=l()&&d.left<=k()},e});jQuery.extend(verge);
 
-/*! Combo2 0.6
+/*! Combo2 0.8
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
@@ -1416,6 +1416,13 @@ Wui.Smarty.prototype = {
  *     - Clicking away from the Combo will close the option list (if open) and remove focus.
  * 
  * - Typing
+ *     - Focusing
+ *         - When the field receives focus from a click it will open the options list. Otherwise if 
+ *           focus comes from another source, a key must be pressed to open the options list.
+ *         - If the field is searchable a search icon will appear in the left of the field. A remote
+ *           search will cause a loading icon to appear in place of the search icon. When a selection
+ *           us made on the field, the search icon no longer appears on focus. This is for the
+ *           purpose of the search icon being a training mechanism more than anything else.
  *     - Tabbing
  *         - Tabbing into the drop down will select the text in the field, but will not 
  *           open the dropdown.
@@ -2243,6 +2250,18 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
 
     /**
+     * Minor Override for Wui.Data.loadData that adds a class to display a spinner
+     */
+    loadData: function() {
+        var me = this;
+        
+        me.el.addClass('wui-loading');
+        
+        return Wui.Data.prototype.loadData.apply(me, arguments);  
+    },
+    
+
+    /**
      * Locks or unlocks the ability for the DOM <body> to scroll while the option list is open.
      * Necessary so we don't have the drop down get disassociated from the field.
      *
@@ -2352,7 +2371,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         // Clear out items in the drop down and add new items from wrapper.
         // Ensure clicking on the drop down doesn't close it.
         me.dd.empty()
-            .removeClass('wui-spinner')
             .append(holder.children().unwrap())
             .off('mousedown')
             .on('mousedown', function() { 
@@ -2370,6 +2388,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         // Necessary here because remote queries will remake the list with every keystroke and
         // that can change the size/position of the options list.
         me.sizeAndPositionDD();
+        me.el.removeClass('wui-loading');
 
         return me.items.length;
     },
@@ -2489,7 +2508,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
         else {
             if ((srchVal.length >= me.minKeys || srchVal.length === 0) && me.previous != oldSearch) {
-                me.dd.addClass('wui-spinner');
                 srchParams[me.searchArgName] = srchVal;
                 me.loadData(srchParams);
             }
@@ -2752,9 +2770,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             // Set the field to the value
             if (selection.rec.disabled !== true) {
                 me.field.val(selection.rec[me.titleItem]);
+                me.setPlaceholder('');
+                me.toggleFieldSearchability();
             }
             else {
-                me.field.attr('placeholder', selection.rec[me.titleItem]);
+                me.setPlaceholder(selection.rec[me.titleItem]);
             }
              
         }
@@ -2990,15 +3010,20 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * 'wui-combo-searchable' toggles a search icon. 
      */
     toggleFieldSearchability: function() {
-        var me = this;
+        var me = this,
+            isSearchable = (me.items.length >= me.searchThreshold || !me.searchLocal),
+            hasNoSelection = (me.selected.length === 0 || me.field.val().length === 0);
         
-        if (me.items.length >= me.searchThreshold || !me.searchLocal) {
+        if (isSearchable && hasNoSelection) {
             me.el.addClass('wui-combo-searchable');
             me.field.prop('readonly', false);
         }
         else {
             me.el.removeClass('wui-combo-searchable');
-            me.field.prop('readonly', true);
+            
+            if (!isSearchable) {
+                me.field.prop('readonly', true);
+            }
         }
     },
 

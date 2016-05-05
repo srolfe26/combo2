@@ -1,3 +1,26 @@
+@-webkit-keyframes wui-spin {
+    /* Don't start turning until 10% because the browser is slow to swap images and we don't
+    want a jittery/spinning search icon */
+    10% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg)
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg)
+    }
+}
+@keyframes wui-spin {
+    10% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg)
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg)
+    }
+}
+
 .wui-hidden {
     display: none !important;
 }
@@ -123,15 +146,12 @@
 
 .wui-combo-dd:empty {
     border: 0;
+    background: transparent;
 }
 
-/* Breaking many good CSS rules here, but its the only decent way to disable scrolling on the 
-body (to mimic the opening of select boxes on other browsers and prevent the dropdown being
-disassociated from the field) but retain the scrollbar (so layout of the page doesn't get 
-messed with). Specifying the body because we don't want this applied on any other elemet. */
-body.wui-combo-no-scroll {
-    position: fixed !important;
-    overflow-y: auto !important;
+.wui-combo-dd li:empty:before {
+    content: '(none)';
+    color: #B2B2B2;
 }
 
 .wui-form-field, .wui-combo-searchable:before {
@@ -160,12 +180,25 @@ body.wui-combo-no-scroll {
     opacity: 0;
 }
 
+.wui-combo-searchable.wui-loading:before {
+    background: url('circle-notch.png?embed') no-repeat center center;
+    -webkit-animation: wui-spin 2s infinite linear;
+    animation: wui-spin 2s infinite linear
+}
+
 .wui-form-field.wui-combo-searchable.wui-fe-focus:before {
     width: 28px;
     opacity: 100;
 }
 
-
+/* Breaking many good CSS rules here, but its the only decent way to disable scrolling on the 
+body (to mimic the opening of select boxes on other browsers and prevent the dropdown being
+disassociated from the field) but retain the scrollbar (so layout of the page doesn't get 
+messed with). Specifying the body because we don't want this applied on any other elemet. */
+body.wui-combo-no-scroll {
+    position: fixed !important;
+    overflow-y: auto !important;
+}
 
 
 /************************************** Optgroup Styles *******************************************/
