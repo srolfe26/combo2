@@ -2131,8 +2131,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     
                     // If there was zero parsed nodes, the text node probably contained an XSS injection.
                     // Best to leave it as a text node.
-                    // If there is only one node, no hilighting took place, do nothing.
-                    if (parsedNodes.length > 1) {
+                    // If there is only one node, either no hilighting took place, do nothing; or 
+                    // the entire node was hilighted in which case it will have changed node type.
+                    if (parsedNodes.length > 1 || (parsedNodes.length === 1 && parsedNodes[0].nodeType != childNode.nodeType)) {
                         // The parsed text is probably broken up into multiple nodes with the hilighting
                         // so replace it with the one or more results.
                         parsedNodes.forEach(function(parsedNode) {
@@ -2910,6 +2911,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 if (event.keyCode == keys.TAB) {
                     if (!me._open) {
                         me.set();
+                    }
+                    else {
+                        // Should not tab when the option list is open - like standard <select>
+                        event.preventDefault();
                     }
                 }
                 else {
