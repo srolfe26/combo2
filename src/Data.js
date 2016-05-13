@@ -32,7 +32,7 @@ Wui.Data = function(args){
             data:       me.params,
             dataType:   'json',
             success:    function(r){ me.success.call(me,r); },
-            error:      function(e){ me.success.call(me,e); },
+            error:      function(e){ me.failure.call(me,e); },
         */
         ajaxConfig:     {},
         

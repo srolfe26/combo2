@@ -391,7 +391,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     // In cases where there is not a null option in the select, make setting the
                     // Combo2 to 'null' translate to a blank string. The value of the select may
                     // be null anyway if there is no blank string option in the select.
-
                     if(newVal === null) {
                         foundItem = me.getItemBy(me.valueItem, newVal);
                         if (typeof foundItem == 'undefined') {
@@ -636,6 +635,27 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
+     * Overrides Wui.Data.failure to turn the spinner off and show an error icon when there is 
+     * an AJAX problem.
+     */
+    failure: function(jqXHR) {
+        var me = this;
+
+        // Discern between aborted and failed requests so that we don't show the fail indicator
+        // when a user types faster than the server can respond.
+        if (jqXHR.status === 0 || jqXHR.readyState === 0) {
+            return;
+        }
+
+        me.el.removeClass('wui-loading').addClass('wui-error');
+        
+        setTimeout(function() {
+            me.el.removeClass('wui-error');
+        }, 1000);
+    },
+    
+    
+    /**
      * Returns a record containing a key value pair to be found in a record.
      *
      * @param    {String}           key     The data item to look for
@@ -690,7 +710,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     /**
      * Returns only the simple value of an item.
      */
-    getVal: function(){
+    getVal: function() {
         var me = this,
             ret_val = ($.isPlainObject(me.value) && typeof me.value[me.valueItem] != 'undefined') ?
                 me.value[me.valueItem] :
@@ -711,7 +731,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             hilightCls = 'wui-highlight';
 
         function clearHilight(obj) {
-            return obj.find('.' + hilightCls).each(function() {
+            return $(obj).find('.' + hilightCls).each(function() {
                 $(this).replaceWith($(this).html());
             }).end();
         }
@@ -723,30 +743,38 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
 
         function hilightText(obj) {
+            var node = (obj instanceof jQuery) ? obj[0] : obj;
+            
+            // There may be previous hilighting
             clearHilight(obj);
 
-            if (obj.children().length) {
-                var text_node = obj.contents().filter(function() { 
-                  return (this.nodeType == 3 && this.nodeValue.replace(/^\s+|\s+$/g, '').length > 0);
-                })[0];
-                
-                // An element may have both child nodes and text nodes. We want to hilight
-                // within all of them. This is essentially a leaf off a big branch.
-                if (text_node) {
-                    $(text_node).replaceWith($.parseHTML(addHilight(text_node.nodeValue)));
+            // Previous hilighting may have split text nodes apart that belong together. Restore them:
+            node.normalize();
+            
+            Array.prototype.forEach.call(node.childNodes, function(childNode) {
+                // Act on text nodes that are not blank, else recurse
+                if (childNode.nodeType == 3 && childNode.nodeValue.replace(/^\s+|\s+$/g, '').length > 0) {
+                    var hilightedText = addHilight(childNode.nodeValue),
+                        parsedNodes = $.parseHTML(hilightedText);
+                    
+                    // If there was zero parsed nodes, the text node probably contained an XSS injection.
+                    // Best to leave it as a text node.
+                    // If there is only one node, no hilighting took place, do nothing.
+                    if (parsedNodes.length > 1) {
+                        // The parsed text is probably broken up into multiple nodes with the hilighting
+                        // so replace it with the one or more results.
+                        parsedNodes.forEach(function(parsedNode) {
+                            node.insertBefore(parsedNode, childNode);
+                        });
+                        node.removeChild(childNode);
+                    }
                 }
-                
-                // Recurse so we're only acting on leaf nodes and don't mess up the template
-                obj.children().each(function() {
-                    hilightText($(this));
-                });
-            }
-            else {
-                // Here we are at a leaf node
-                obj.html(addHilight(obj.text()));
-            }
+                else if (childNode.hasChildNodes()) {
+                    hilightText(childNode);
+                }
+            });
 
-            return obj;
+            return $(obj);
         }
 
         // We have a search string, hilight and hide stuff
@@ -984,8 +1012,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         // Show data in list, Add items to me.items
         me.data.forEach(function(rec) {
-            var itm = {
-                    el: $(me.engine.make(rec)),
+            var templateString = me.engine.make(rec),
+                itm = {
+                    el: $(templateString),
                     rec: rec
                 };
             
@@ -1020,11 +1049,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 holder.append(itm.el);
             }
         });
+        
 
         // Clear out items in the drop down and add new items from wrapper.
         // Ensure clicking on the drop down doesn't close it.
         me.dd.empty()
-            .append(holder.children().unwrap())
+            .append(holder.children())
             .off('mousedown')
             .on('mousedown', function() { 
                 me.isBlurring = false; 

@@ -288,7 +288,7 @@ if (!Array.prototype.filter) {
  */
 !function(a,b,c){"undefined"!=typeof module&&module.exports?module.exports=c():a[b]=c()}(this,"verge",function(){function a(){return{width:k(),height:l()}}function b(a,b){var c={};return b=+b||0,c.width=(c.right=a.right+b)-(c.left=a.left-b),c.height=(c.bottom=a.bottom+b)-(c.top=a.top-b),c}function c(a,c){return a=a&&!a.nodeType?a[0]:a,a&&1===a.nodeType?b(a.getBoundingClientRect(),c):!1}function d(b){b=null==b?a():1===b.nodeType?c(b):b;var d=b.height,e=b.width;return d="function"==typeof d?d.call(b):d,e="function"==typeof e?e.call(b):e,e/d}var e={},f="undefined"!=typeof window&&window,g="undefined"!=typeof document&&document,h=g&&g.documentElement,i=f.matchMedia||f.msMatchMedia,j=i?function(a){return!!i.call(f,a).matches}:function(){return!1},k=e.viewportW=function(){var a=h.clientWidth,b=f.innerWidth;return b>a?b:a},l=e.viewportH=function(){var a=h.clientHeight,b=f.innerHeight;return b>a?b:a};return e.mq=j,e.matchMedia=i?function(){return i.apply(f,arguments)}:function(){return{}},e.viewport=a,e.scrollX=function(){return f.pageXOffset||h.scrollLeft},e.scrollY=function(){return f.pageYOffset||h.scrollTop},e.rectangle=c,e.aspect=d,e.inX=function(a,b){var d=c(a,b);return!!d&&d.right>=0&&d.left<=k()},e.inY=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.top<=l()},e.inViewport=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.right>=0&&d.top<=l()&&d.left<=k()},e});jQuery.extend(verge);
 
-/*! Combo2 0.8
+/*! Combo2 1.0
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
@@ -548,7 +548,7 @@ Wui.Data = function(args){
             data:       me.params,
             dataType:   'json',
             success:    function(r){ me.success.call(me,r); },
-            error:      function(e){ me.success.call(me,e); },
+            error:      function(e){ me.failure.call(me,e); },
         */
         ajaxConfig:     {},
         
@@ -1063,10 +1063,7 @@ Wui.Smarty.prototype = {
                         map = unescape ? me.invert(baseMap) : baseMap,
                         regex = new RegExp('[' + me.getKeys(map).join('').replace(/\//,'\\/') + ']', 'g');
 
-                    // Run it twice because some injetion schemes are designed to overcome a first pass
                     return String(str).replace(regex, function(match) {
-                        return map[match];
-                    }).replace(regex, function(match) {
                         return map[match];
                     });
                 },
@@ -1274,8 +1271,15 @@ Wui.Smarty.prototype = {
             return me.compiled.call(me, rec);
         }
     },
+    
 
-
+    /**
+     * Separates variables from string literals in the template and pushes them individually onto
+     * the build array which is used to create the 'compiled' function. Also fills the template
+     * string with values for the current record.
+     *
+     * @returns     String      The full template string with comments removed and values inserted.
+     */
     parse: function() {
         var me = this,
             offsetLast = 0,
@@ -1284,27 +1288,38 @@ Wui.Smarty.prototype = {
 
         // Remove comments. Comments are of the form {* ... *} and can be multi-line
         tplCopy = commentsClean = tplCopy.replace(/{\*[\w\s.,\/#!$%\^&\*;:{}=\-_`~()\[\]@]*\*}/g,'');
+        
         // Fill values into the template
         tplCopy = tplCopy.replace(/{([\w+|:\. '"-]+)}/g,function(match, expr, offset) {
             // '/*The regex throws off code hilighting in Sublime. So killing it with a comment*/
             var flags = expr.split('|'),
                 key = flags.shift(),
                 value = "";
+                
             // Add the string literal to the build array
             me.build.push(commentsClean.substr(offsetLast, offset - offsetLast));
+            
             offsetLast = offset + expr.length + 2;
+            
             // Add the key val to the build array
             me.build.push({key: key});
+            
             // Lookup the value in the record
             value = me.lookup(me.rec, key);
+            
             // Run any flags on the value before returning it
             value = me.applyFlags(value, flags);
+            
             return value;
         });
+        
         // Add the final string literal before returning tplCopy for the first outputted template
         me.build.push(commentsClean.substr(offsetLast));
+        
         return tplCopy;
     },
+    
+    
     /*
      * Trims any set of custom characters off of the beginning and end of a string
      *
@@ -1324,6 +1339,8 @@ Wui.Smarty.prototype = {
         characters = characters.replace(/[\[\](){}?*+\^$\\.|\-]/g, "\\$&");
         return str.replace(new RegExp("^[" + characters + "]+|[" + characters + "]+$", flags), '');
     },
+    
+    
     /*
      * Unescape a string for a given type of output.
      *
@@ -1334,6 +1351,8 @@ Wui.Smarty.prototype = {
     unescape: function(str, type){
         return this.escape(str, type, true);
     },
+    
+    
     /*
      * Makes the entire string lower-case.
      *
@@ -1738,7 +1757,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     // In cases where there is not a null option in the select, make setting the
                     // Combo2 to 'null' translate to a blank string. The value of the select may
                     // be null anyway if there is no blank string option in the select.
-
                     if(newVal === null) {
                         foundItem = me.getItemBy(me.valueItem, newVal);
                         if (typeof foundItem == 'undefined') {
@@ -1983,6 +2001,27 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
+     * Overrides Wui.Data.failure to turn the spinner off and show an error icon when there is 
+     * an AJAX problem.
+     */
+    failure: function(jqXHR) {
+        var me = this;
+
+        // Discern between aborted and failed requests so that we don't show the fail indicator
+        // when a user types faster than the server can respond.
+        if (jqXHR.status === 0 || jqXHR.readyState === 0) {
+            return;
+        }
+
+        me.el.removeClass('wui-loading').addClass('wui-error');
+        
+        setTimeout(function() {
+            me.el.removeClass('wui-error');
+        }, 1000);
+    },
+    
+    
+    /**
      * Returns a record containing a key value pair to be found in a record.
      *
      * @param    {String}           key     The data item to look for
@@ -2037,7 +2076,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     /**
      * Returns only the simple value of an item.
      */
-    getVal: function(){
+    getVal: function() {
         var me = this,
             ret_val = ($.isPlainObject(me.value) && typeof me.value[me.valueItem] != 'undefined') ?
                 me.value[me.valueItem] :
@@ -2058,7 +2097,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             hilightCls = 'wui-highlight';
 
         function clearHilight(obj) {
-            return obj.find('.' + hilightCls).each(function() {
+            return $(obj).find('.' + hilightCls).each(function() {
                 $(this).replaceWith($(this).html());
             }).end();
         }
@@ -2070,30 +2109,38 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
 
         function hilightText(obj) {
+            var node = (obj instanceof jQuery) ? obj[0] : obj;
+            
+            // There may be previous hilighting
             clearHilight(obj);
 
-            if (obj.children().length) {
-                var text_node = obj.contents().filter(function() { 
-                  return (this.nodeType == 3 && this.nodeValue.replace(/^\s+|\s+$/g, '').length > 0);
-                })[0];
-                
-                // An element may have both child nodes and text nodes. We want to hilight
-                // within all of them. This is essentially a leaf off a big branch.
-                if (text_node) {
-                    $(text_node).replaceWith($.parseHTML(addHilight(text_node.nodeValue)));
+            // Previous hilighting may have split text nodes apart that belong together. Restore them:
+            node.normalize();
+            
+            Array.prototype.forEach.call(node.childNodes, function(childNode) {
+                // Act on text nodes that are not blank, else recurse
+                if (childNode.nodeType == 3 && childNode.nodeValue.replace(/^\s+|\s+$/g, '').length > 0) {
+                    var hilightedText = addHilight(childNode.nodeValue),
+                        parsedNodes = $.parseHTML(hilightedText);
+                    
+                    // If there was zero parsed nodes, the text node probably contained an XSS injection.
+                    // Best to leave it as a text node.
+                    // If there is only one node, no hilighting took place, do nothing.
+                    if (parsedNodes.length > 1) {
+                        // The parsed text is probably broken up into multiple nodes with the hilighting
+                        // so replace it with the one or more results.
+                        parsedNodes.forEach(function(parsedNode) {
+                            node.insertBefore(parsedNode, childNode);
+                        });
+                        node.removeChild(childNode);
+                    }
                 }
-                
-                // Recurse so we're only acting on leaf nodes and don't mess up the template
-                obj.children().each(function() {
-                    hilightText($(this));
-                });
-            }
-            else {
-                // Here we are at a leaf node
-                obj.html(addHilight(obj.text()));
-            }
+                else if (childNode.hasChildNodes()) {
+                    hilightText(childNode);
+                }
+            });
 
-            return obj;
+            return $(obj);
         }
 
         // We have a search string, hilight and hide stuff
@@ -2331,8 +2378,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         // Show data in list, Add items to me.items
         me.data.forEach(function(rec) {
-            var itm = {
-                    el: $(me.engine.make(rec)),
+            var templateString = me.engine.make(rec),
+                itm = {
+                    el: $(templateString),
                     rec: rec
                 };
             
@@ -2367,11 +2415,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 holder.append(itm.el);
             }
         });
+        
 
         // Clear out items in the drop down and add new items from wrapper.
         // Ensure clicking on the drop down doesn't close it.
         me.dd.empty()
-            .append(holder.children().unwrap())
+            .append(holder.children())
             .off('mousedown')
             .on('mousedown', function() { 
                 me.isBlurring = false; 

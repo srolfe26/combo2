@@ -323,10 +323,7 @@ Wui.Smarty.prototype = {
                         map = unescape ? me.invert(baseMap) : baseMap,
                         regex = new RegExp('[' + me.getKeys(map).join('').replace(/\//,'\\/') + ']', 'g');
 
-                    // Run it twice because some injetion schemes are designed to overcome a first pass
                     return String(str).replace(regex, function(match) {
-                        return map[match];
-                    }).replace(regex, function(match) {
                         return map[match];
                     });
                 },
@@ -534,8 +531,15 @@ Wui.Smarty.prototype = {
             return me.compiled.call(me, rec);
         }
     },
+    
 
-
+    /**
+     * Separates variables from string literals in the template and pushes them individually onto
+     * the build array which is used to create the 'compiled' function. Also fills the template
+     * string with values for the current record.
+     *
+     * @returns     String      The full template string with comments removed and values inserted.
+     */
     parse: function() {
         var me = this,
             offsetLast = 0,
@@ -544,27 +548,38 @@ Wui.Smarty.prototype = {
 
         // Remove comments. Comments are of the form {* ... *} and can be multi-line
         tplCopy = commentsClean = tplCopy.replace(/{\*[\w\s.,\/#!$%\^&\*;:{}=\-_`~()\[\]@]*\*}/g,'');
+        
         // Fill values into the template
         tplCopy = tplCopy.replace(/{([\w+|:\. '"-]+)}/g,function(match, expr, offset) {
             // '/*The regex throws off code hilighting in Sublime. So killing it with a comment*/
             var flags = expr.split('|'),
                 key = flags.shift(),
                 value = "";
+                
             // Add the string literal to the build array
             me.build.push(commentsClean.substr(offsetLast, offset - offsetLast));
+            
             offsetLast = offset + expr.length + 2;
+            
             // Add the key val to the build array
             me.build.push({key: key});
+            
             // Lookup the value in the record
             value = me.lookup(me.rec, key);
+            
             // Run any flags on the value before returning it
             value = me.applyFlags(value, flags);
+            
             return value;
         });
+        
         // Add the final string literal before returning tplCopy for the first outputted template
         me.build.push(commentsClean.substr(offsetLast));
+        
         return tplCopy;
     },
+    
+    
     /*
      * Trims any set of custom characters off of the beginning and end of a string
      *
@@ -584,6 +599,8 @@ Wui.Smarty.prototype = {
         characters = characters.replace(/[\[\](){}?*+\^$\\.|\-]/g, "\\$&");
         return str.replace(new RegExp("^[" + characters + "]+|[" + characters + "]+$", flags), '');
     },
+    
+    
     /*
      * Unescape a string for a given type of output.
      *
@@ -594,6 +611,8 @@ Wui.Smarty.prototype = {
     unescape: function(str, type){
         return this.escape(str, type, true);
     },
+    
+    
     /*
      * Makes the entire string lower-case.
      *

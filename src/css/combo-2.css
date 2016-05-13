@@ -186,6 +186,10 @@
     animation: wui-spin 2s infinite linear
 }
 
+.wui-combo-searchable.wui-error:before {
+    background: url('error.png?embed') no-repeat center center;
+}
+
 .wui-form-field.wui-combo-searchable.wui-fe-focus:before {
     width: 28px;
     opacity: 100;

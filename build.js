@@ -2,7 +2,7 @@ var shell = require('shelljs');
 var buildJSHint = require('build-jshint');
 var UglifyJS = require("uglifyjs");
 var builder = require('wui-builder');
-var version = '0.8';
+var version = '1.0';
 
 // Perform init
 shell.rm('-rf', './dist');
@@ -103,7 +103,7 @@ buildJSHint(files, opts, function(err, hasError) {
         fn: ['addCopyright']
     });
 
-    /********************************************** CSS ***********************************************/
+    /********************************************** CSS *******************************************/
     builder.cssMinify('./src/css/combo-2.css', './dist/css/combo-2.css', './src/css/');
 
     if (hasError === true) {
