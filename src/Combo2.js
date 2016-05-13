@@ -161,6 +161,9 @@ Wui.Combo2 = function(args, target) {
             spellcheck:         'false'
         }).addClass('wui-combo-search'),
         
+        // When true, the user MUST select an item from the option list.
+        forceSelect: false,
+        
         hiddenCls: 'wui-hidden',
         
         // The minimum number of characters that must be in the field before a search will occur. If
@@ -1546,7 +1549,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     if (!me._open) {
                         me.set();
                     }
-                    else {
+                    else if (me.forceSelect) {
                         // Should not tab when the option list is open - like standard <select>
                         event.preventDefault();
                     }
