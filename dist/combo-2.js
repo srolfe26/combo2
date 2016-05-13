@@ -288,7 +288,7 @@ if (!Array.prototype.filter) {
  */
 !function(a,b,c){"undefined"!=typeof module&&module.exports?module.exports=c():a[b]=c()}(this,"verge",function(){function a(){return{width:k(),height:l()}}function b(a,b){var c={};return b=+b||0,c.width=(c.right=a.right+b)-(c.left=a.left-b),c.height=(c.bottom=a.bottom+b)-(c.top=a.top-b),c}function c(a,c){return a=a&&!a.nodeType?a[0]:a,a&&1===a.nodeType?b(a.getBoundingClientRect(),c):!1}function d(b){b=null==b?a():1===b.nodeType?c(b):b;var d=b.height,e=b.width;return d="function"==typeof d?d.call(b):d,e="function"==typeof e?e.call(b):e,e/d}var e={},f="undefined"!=typeof window&&window,g="undefined"!=typeof document&&document,h=g&&g.documentElement,i=f.matchMedia||f.msMatchMedia,j=i?function(a){return!!i.call(f,a).matches}:function(){return!1},k=e.viewportW=function(){var a=h.clientWidth,b=f.innerWidth;return b>a?b:a},l=e.viewportH=function(){var a=h.clientHeight,b=f.innerHeight;return b>a?b:a};return e.mq=j,e.matchMedia=i?function(){return i.apply(f,arguments)}:function(){return{}},e.viewport=a,e.scrollX=function(){return f.pageXOffset||h.scrollLeft},e.scrollY=function(){return f.pageYOffset||h.scrollTop},e.rectangle=c,e.aspect=d,e.inX=function(a,b){var d=c(a,b);return!!d&&d.right>=0&&d.left<=k()},e.inY=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.top<=l()},e.inViewport=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.right>=0&&d.top<=l()&&d.left<=k()},e});jQuery.extend(verge);
 
-/*! Combo2 1.01
+/*! Combo2 1.0.2
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
@@ -1464,7 +1464,8 @@ Wui.Smarty.prototype = {
  *     - Enter
  *         - If the options list is open, enter key will set the value of the field to the currently 
  *           hilighted item in the option list, and close the list.
- *         - If the options list is closed, enter has no effect.
+ *         - If the options list is closed, enter key events will be pased through to the
+ *           surrounding DOM.
  *     - Escape
  *         - Sets the value of the field back to its previous value, and closes the options list 
  *           if it's open.
@@ -1869,7 +1870,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             retBtn;
 
         if (me.showOpenButton) {
-            retBtn = $('<button>', {
+            // This is a link instead of a button because when setListeners lets the ENTER keydown event
+            // fly, within a form, the next button on the DOM within the form will catch it
+            // which would be the OptionListToggle. That would in turn fire the button 'click'
+            // event which would open the option list before the ENTER keyup event runs, which would
+            // see an open dropdown and catch the event.
+            retBtn = $('<a>', {
                 unselectable:'on',
                 tabindex: -1
             })
@@ -2872,7 +2878,20 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     
         return me.field
             .on('keydown', function(event) {
-                event.stopPropagation();
+                // If the option list is open, enter will set a value, otherwise it passes
+                // through so a user can submit a form while focus is on this field.
+                if (event.keyCode == keys.ENTER) {
+                    me.can_search = false;
+                    
+                    if (me._open) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        me.set();    
+                    }
+                }
+                else {
+                    event.stopPropagation();
+                }
                 
                 // When the field is readonly, don't perform default for any keys except tab so
                 // that behavoirs like backspace causing page navigation don't occur.
@@ -2894,8 +2913,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     }
                 }
                 else {
-                    // Open drop down on any keypress that isn't tab.
-                    if (event.keyCode != keys.SHIFT) {
+                    // Open drop down on any keypress that isn't shift or enter.
+                    if ($.inArray(event.keyCode,[keys.ENTER, keys.SHIFT]) == -1) {
                         if (!me._open) {
                             me.justOpened = true;
                         }
@@ -2918,17 +2937,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                                 break;
                         }
                     }
-                    else if (event.keyCode == keys.ENTER) {
-                        me.can_search = false;
-                        
-                        // If the option list is open, enter will set a value, otherwise it passes
-                        // through to whatever listener may want it. This is so a user can submit a
-                        // form while focus is on this field.
-                        if (me._open) {
-                            event.preventDefault();
-                            me.set();    
-                        }
-                    }
                     else {
                         // for ie8's lack of 'input' support.
                         me.can_search = true;
@@ -2938,11 +2946,15 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             .on('keyup', function(event) {
                 var key = null;
                 
-                event.stopPropagation();
-                
                 if (event.keyCode == keys.ENTER) {
-                    event.preventDefault(); 
-                    me.set();
+                    if (me._open) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        me.set();
+                    }
+                }
+                else {
+                    event.stopPropagation();
                 }
                 
                 if (me.can_search && $.inArray(event.keyCode,[keys.TAB, keys.SHIFT]) == -1) {

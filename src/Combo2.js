@@ -98,7 +98,8 @@
  *     - Enter
  *         - If the options list is open, enter key will set the value of the field to the currently 
  *           hilighted item in the option list, and close the list.
- *         - If the options list is closed, enter has no effect.
+ *         - If the options list is closed, enter key events will be pased through to the
+ *           surrounding DOM.
  *     - Escape
  *         - Sets the value of the field back to its previous value, and closes the options list 
  *           if it's open.
@@ -503,7 +504,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             retBtn;
 
         if (me.showOpenButton) {
-            retBtn = $('<button>', {
+            // This is a link instead of a button because when setListeners lets the ENTER keydown event
+            // fly, within a form, the next button on the DOM within the form will catch it
+            // which would be the OptionListToggle. That would in turn fire the button 'click'
+            // event which would open the option list before the ENTER keyup event runs, which would
+            // see an open dropdown and catch the event.
+            retBtn = $('<a>', {
                 unselectable:'on',
                 tabindex: -1
             })
@@ -1506,7 +1512,20 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     
         return me.field
             .on('keydown', function(event) {
-                event.stopPropagation();
+                // If the option list is open, enter will set a value, otherwise it passes
+                // through so a user can submit a form while focus is on this field.
+                if (event.keyCode == keys.ENTER) {
+                    me.can_search = false;
+                    
+                    if (me._open) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        me.set();    
+                    }
+                }
+                else {
+                    event.stopPropagation();
+                }
                 
                 // When the field is readonly, don't perform default for any keys except tab so
                 // that behavoirs like backspace causing page navigation don't occur.
@@ -1528,8 +1547,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     }
                 }
                 else {
-                    // Open drop down on any keypress that isn't tab.
-                    if (event.keyCode != keys.SHIFT) {
+                    // Open drop down on any keypress that isn't shift or enter.
+                    if ($.inArray(event.keyCode,[keys.ENTER, keys.SHIFT]) == -1) {
                         if (!me._open) {
                             me.justOpened = true;
                         }
@@ -1552,17 +1571,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                                 break;
                         }
                     }
-                    else if (event.keyCode == keys.ENTER) {
-                        me.can_search = false;
-                        
-                        // If the option list is open, enter will set a value, otherwise it passes
-                        // through to whatever listener may want it. This is so a user can submit a
-                        // form while focus is on this field.
-                        if (me._open) {
-                            event.preventDefault();
-                            me.set();    
-                        }
-                    }
                     else {
                         // for ie8's lack of 'input' support.
                         me.can_search = true;
@@ -1572,11 +1580,15 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             .on('keyup', function(event) {
                 var key = null;
                 
-                event.stopPropagation();
-                
                 if (event.keyCode == keys.ENTER) {
-                    event.preventDefault(); 
-                    me.set();
+                    if (me._open) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        me.set();
+                    }
+                }
+                else {
+                    event.stopPropagation();
                 }
                 
                 if (me.can_search && $.inArray(event.keyCode,[keys.TAB, keys.SHIFT]) == -1) {
