@@ -1536,7 +1536,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                         me.open();
                     }
                     
-                    if ($.inArray(event.keyCode,[keys.DOWN, keys.UP, keys.ENTER, keys.ESC]) != -1) {
+                    if ($.inArray(event.keyCode,[keys.DOWN, keys.UP, keys.ESC]) != -1) {
                         event.preventDefault();
                         me.can_search = false;
                         
@@ -1547,12 +1547,20 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                             case keys.UP:
                                 me.selectAjacent(-1);
                                 break;
-                            case keys.ENTER:
-                                me.set();
-                                break;
                             case keys.ESC:
                                 me.close();
                                 break;
+                        }
+                    }
+                    else if (event.keyCode == keys.ENTER) {
+                        me.can_search = false;
+                        
+                        // If the option list is open, enter will set a value, otherwise it passes
+                        // through to whatever listener may want it. This is so a user can submit a
+                        // form while focus is on this field.
+                        if (me._open) {
+                            event.preventDefault();
+                            me.set();    
                         }
                     }
                     else {
