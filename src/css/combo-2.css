@@ -88,7 +88,7 @@
     width: 26px;
     height: 26px;
     background-color: #fff;
-    cursor: pointer;
+    cursor: pointer !important;
 }
 
 .drop-down-switch:after {
