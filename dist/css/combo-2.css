@@ -1,4 +1,4 @@
-/*! Combo2 1.0.5
+/*! Combo2 1.1.0
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
@@ -112,10 +112,6 @@
 
 /* IE8 Only uses \0screen */
 @media \0screen {
-    .drop-down-switch:after {
-        margin: -14px 0 0 -6px;
-    }
-    
     .wui-combo-search {
         padding-top: 5px;
     }

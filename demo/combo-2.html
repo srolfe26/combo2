@@ -289,22 +289,21 @@
                 append: '#remote_dom_target'
             });
             
-            // // WUI Change listener
             
+            // // WUI Change listener
             // $(document).on('valchange', function(event, combo) {
             //     if (console) {
             //         console.log(
             //             arguments,                  // All the information the change event provides
             //             combo.val(),                // The value of the WUI Combo
-            //             $('[name=the_guys]').val()  // The value of the underlying select box
+            //             $('#target').val()           // The value of the underlying select box
             //         );
             //     }
             // });
             
             
             // // Listener on original select for the focus event to come through
-            
-            // $('#the_guys').on('focus', function(){
+            // $('#target').on('focus', function(){
             //     if (console) {
             //         console.log('focused!');
             //     }
@@ -312,9 +311,8 @@
             
             
             // // Test loading an option at runtime
-            
-            // $('[label=Awesome]').append('<option>Dave</Dave>');
-            // $('[name=the_guys]').val('Dave');
+            // $('#target [label=Awesome]').append('<option>Dave</Dave>');
+            // $('#target').val('Dave');
         </script>
         
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/prism.min.js"></script>

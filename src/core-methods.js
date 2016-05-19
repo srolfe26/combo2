@@ -15,6 +15,18 @@ Wui.id = function(prefix) {
     return prefix +'-'+ (Wui.idCounter = ~~++Wui.idCounter);
 };
 
+/**
+ * Shorthand for typing typeof comparisons everywhere.
+ *
+ * @param       {Object}    v   Only an object in the sense that everything in JS is an object. It
+ *                              can be any variable you want to check whether it is defined.
+ *
+ * @returns     {Boolean}   True if the item is not undefined.
+ */
+Wui.isset = function(v) {
+    return (typeof v !== 'undefined');
+};
+
 
 /**
  * Gets the maximum CSS z-index on the page and returns one higher, or one if no z-indexes are defined.

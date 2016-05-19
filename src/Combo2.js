@@ -235,9 +235,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             possible_actions = ['append','prepend', 'before', 'after'];
 
         // Try to get action and target from configs if not passed in as parameters
-        if (typeof action == 'undefined' || typeof target == 'undefined') {
+        if (!Wui.isset(action) || !Wui.isset(target)) {
             $.each(possible_actions, function(idx, act) {
-                if (typeof me[act] != 'undefined') {
+                if (Wui.isset(me[act])) {
                     action = act;
                     target = me[act];
                     return false;
@@ -246,12 +246,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
 
         // Default action
-        if (typeof action == 'undefined') {
+        if (!Wui.isset(action)) {
             action = 'append';
         }
 
         // Default target
-        if (typeof target == 'undefined') {
+        if (!Wui.isset(target)) {
             target = 'body';
         }
 
@@ -380,7 +380,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         // Add an object observer on the select box so that value changes translate well
         me.selectObserver($(select));
-        
+
         // Add listeners to mirror events between combo and select
         select.on({
             change: function() {
@@ -388,7 +388,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 me.val(select.val(), false);
             }
         });
-        
+
         me.el.on('valchange', function(event, combo, newVal) {
             var foundItem,
                 setSelect = (function() {
@@ -397,7 +397,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     // be null anyway if there is no blank string option in the select.
                     if(newVal === null) {
                         foundItem = me.getItemBy(me.valueItem, newVal);
-                        if (typeof foundItem == 'undefined') {
+                        if (!Wui.isset(foundItem)) {
                             return "";
                         }
                         else {
@@ -411,7 +411,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                         return newVal;
                     }
                 })();
-                
+
+            // Set the value from the JS on the HTML field.
             select.val(setSelect);
         });  
     },
@@ -428,6 +429,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         me.selectTag.after(me.el).addClass(me.hiddenCls).prependTo(me.el);
         me.attachToElement(me.selectTag);
         me.cssByParam();
+        
+        // Add a reference to the WUI field on the select tag
+        me.selectTag[0].wuiObj = me;
         
         // Default data model returned from Wui.parseOptions();
         me.valueItem =  'value';
@@ -721,7 +725,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      */
     getVal: function() {
         var me = this,
-            ret_val = ($.isPlainObject(me.value) && typeof me.value[me.valueItem] != 'undefined') ?
+            ret_val = ($.isPlainObject(me.value) && Wui.isset(me.value[me.valueItem])) ?
                 me.value[me.valueItem] :
                     me.value;
 
@@ -788,7 +792,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
 
         // We have a search string, hilight and hide stuff
-        if (typeof srchVal != 'undefined' && $.trim(srchVal).length !== 0) {
+        if (Wui.isset(srchVal) && $.trim(srchVal).length !== 0) {
             // Un-hide all optgroups
             me.dd.find('.wui-optgroup-label.' + me.hiddenCls).removeClass(me.hiddenCls);
             
@@ -833,7 +837,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     init: function(target) {
         var me = this;
             
-        me.selectTag = (typeof target != 'undefined') ? $(target) : undefined;    
+        me.selectTag = (Wui.isset(target)) ? $(target) : undefined;    
             
         $.extend(me, {
                             // Build the field.
@@ -1041,8 +1045,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             }
             
             // Put item into optgroups if necessary 
-            if (typeof rec.optgroup != 'undefined' && String(rec.optgroup).length !== 0) {
-                if (typeof optGroups[rec.optgroup] != 'undefined') {
+            if (Wui.isset(rec.optgroup) && String(rec.optgroup).length !== 0) {
+                if (Wui.isset(optGroups[rec.optgroup])) {
                     optGroups[rec.optgroup].find('ul').append(itm.el);
                 }
                 else {
@@ -1113,7 +1117,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 mousemove: function(event) { 
                     event.stopPropagation();
                     
-                    if (typeof me.selected[0] == 'undefined') {
+                    if (!Wui.isset(me.selected[0])) {
                         me.itemSelect($(this).data('itm'));
                     }
                     
@@ -1359,11 +1363,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             selectedItm = me.selectBy(me.valueItem, me.value);
         }
     
-        if (typeof selectedItm == 'undefined' && $.isPlainObject(me.value)) {
+        if (!Wui.isset(selectedItm) && $.isPlainObject(me.value)) {
             selectedItm = me.selectBy(me.valueItem, me.value[me.valueItem]);
         }
        
-        if (typeof selectedItm !== 'undefined') {
+        if (Wui.isset(selectedItm)) {
             me.set();
         }
         else {
@@ -1384,62 +1388,106 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     selectObserver: function(mySelect) {
         var me = this;
         
+        // Modifying the getter and setter on the selected option, allows us to know when the
+        // value of the select box has been programmatically changed.
+        function modifyOptionSelect(option) {
+            option._selected = option.selected;
+            
+            Object.defineProperty(option, 'selected', {
+                get: function() {
+                    return option._selected;
+                },
+                set: function(val) {
+                    option._selected = (val && (option.disabled !== true));
+                    option[(option._selected ? 'setAttribute' : 'removeAttribute')]('selected', true);                    
+                    wui_select_observer(val);
+                }
+            });
+        }
+        
         // Different browsers (Safari) will fire events in differing order, so this makes sure the
         // observer events are fired for ALL option values in the select before firing a change
         // that will update the value on the WUI control. If a change fires prematurely, the wrong
         // value will be captured by the WUI field.
-        function wui_select_observer() {
+        function wui_select_observer(selected) {
             var elem = mySelect[0],
-                option_count = (~~elem.option_count !== 0) ? elem.option_count : mySelect.find('option').length;
+                options = elem.options,
+                option_length = options.length,
+                option,
+                i = option_length;
             
-            // The select box has been modified
-            if(me.selectTag && option_count != me.total) {
+            // Mutations have occurred on the select
+            if (me.selectTag && option_length != me.total) {
+                // So reload the data
                 me.setData(Wui.parseSelect(me.selectTag));
+                
+                // Ensure the newly created options have the get/set listener
+                while(i--) {
+                    option = options[i];
+                    if (!Wui.isset(option._selected)) {
+                        modifyOptionSelect(option);
+                    }
+                }
             }
             
-            elem.observer_count = ~~++elem.observer_count;
+            // Observer count keeps track of how many times the option.select:set has been run
+            if (Wui.isset(elem.observer_count)) {
+                elem.observer_count++;
+            }
+            else {
+                elem.observer_count = 1;
+            }
             
-            if(elem.observer_count + 1 == option_count) {
-                elem.observer_count = 0;
+            // Mark that a selected element exists
+            if (selected === true) {
+                elem.hasSelected = true;
+            }
+            
+            if (elem.observer_count == option_length) {
+                // Only fire the change event if at least one option is selected.
+                if (elem.hasSelected === true) {
+                    // setTimeout necessary for operating after mutations on the select have occured.
+                    setTimeout(function(){
+                        // Setting selectedIndex is VITAL to the value being set properly on the
+                        // select tag. When only setting the attribute on the option tag, the value
+                        // doesn't always follow.
+                        i = option_length;
+                        while(i--) {
+                            option = options[i];
+                            if (option._selected) {
+                                elem.selectedIndex = i;
+                            }
+                        }
+
+                        mySelect.trigger('change');
+                    }, 0);
+                }
+                else {
+                    // jQuery documentation says this helps browsers behave consistently when no
+                    // options are selected.
+                    elem.selectedIndex = -1;
+                }
                 
-                // Used to put this call on the event loop because in the case where the data gets
-                // reset, the field hasn't yet registered the change in value, so this way the event
-                // will execute after the change in value.
-                setTimeout(function() {
-                    mySelect.trigger('change');
-                }, 0);
+                elem.observer_count = 0;
+                elem.hasSelected = false;
             }
         }
         
-        // For jQuery-type setters and others which utilize changing the option to change value.
-        mySelect.find('option').each(function(index, option) {
-            // Property mutation for hidden input
-            Object.defineProperty(option, "selected", {
-                get: function() {
-                    return this.getAttribute("selected");
-                },
-                set: function(val) {
-                    // handle select change here
-                    if (val === false) {
-                        option.removeAttribute('selected');
-                    }
-                    else if (option.disabled !== true) {
-                        option.setAttribute('selected', true);
-                    }
-                    
-                    wui_select_observer();
-                }
-            });
-        });
+        // Hack to eliminate FF caching bug: http://stackoverflow.com/questions/1479233
+        mySelect.attr('autocomplete', 'off');
         
         // For standard JS type setters who will set the value attribute on the field.
-        Object.defineProperty(mySelect[0], "value", {
+        Object.defineProperty(mySelect[0], 'value', {
             get: function() {
                 return $.valHooks.select.get(this);
             },
             set: function(val) {
                 $.valHooks.select.set(this, val);
             }
+        });
+        
+        mySelect.find('option').each(function(index, option) {
+            modifyOptionSelect(option);
         });
         
         // Makes the function a pass-through
@@ -1610,7 +1658,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                         if (event.which !== 0 && !event.ctrlKey && !event.metaKey && !event.altKey) {
                             key = String.fromCharCode(event.which);
                             
-                            if (typeof me.selectTypeBuffer == 'undefined') {
+                            if (!Wui.isset(me.selectTypeBuffer)) {
                                 me.selectTypeBuffer = key;
                                 
                                 // This buffer should only last for a second, then it will clear.
