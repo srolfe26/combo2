@@ -488,6 +488,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         var me = this;
             
         if (me._open === true) {
+            // Turn off event listeners for list items
+            me.optionListEventsActive(false);
+            
             me.lockBodyScroll();
             
             me._open = false;
@@ -865,6 +868,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                             // Used to tie the drop down and focus events back to the parent field.
             idCls:          me.selectTag ? Wui.id(me.selectTag.attr('name')) : Wui.id(),
             
+                            // Class added to items, besides disabled ones, placed in the option list
+            itemCls:        'wui-list-item',
+            
                             // Array will contain objects that bind the Combo's data and DOM nodes.
             items:          [],
             
@@ -1058,9 +1064,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             // DOM node (el).
             me.items.push(itm);
             
-            // No listeners for disabled items disables them in this context
+            // Bind data for all but disabled items, add a class to identify those
             if (rec.disabled !== true) {
-                me.optionEventListeners(itm);
+                itm.el.data('itm', itm).addClass(me.itemCls);
             }
             else {
                 itm.el.addClass('wui-combo-disabled');
@@ -1121,22 +1127,17 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
-     * Adds the interaction listeners to passed in option list item's 'el' node.
+     * Adds the interaction listeners for the list items onto the list.
      *
-     * @param       {Object}    itm     A Wui Object item with an 'el' node and 'rec' data property.
-     *
-     * @returns     {Object}    The 'itm' object that was passed in.
+     * @param   {Boolean}   activate    Required. Determines whether to turn these events on or off.
      */
-    optionEventListeners: function(itm) {
-        var me = this;
+    optionListEventsActive: function(activate) {
+        var me = this,
+            cls = '.' + me.itemCls;
         
-        itm.el.data('itm', itm)
-            .bind('touchstart', function() {
-                    me.itemSelect($(this).data('itm'));
-                    me.isBlurring = false;
-            })
-            .on({
-                mousemove: function(event) { 
+        if (activate) {
+            me.dd
+                .on('mousemove', cls, function(event) {
                     event.stopPropagation();
                     
                     if (!Wui.isset(me.selected[0])) {
@@ -1146,21 +1147,32 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     if (me.selected[0].el[0] !== this) {
                         me.itemSelect($(this).data('itm'));
                     }
-                },
-                            
-                mousedown: function(event) { 
+                })
+                .on('mousedown', cls, function(event) {
                     event.stopPropagation();
                     me.isBlurring = false; 
-                },
-                            
-                click: function(event) { 
+                })
+                .on('click', cls, function(event) {
                     event.stopPropagation();
                     me.set();
                     me.close();
-                }
-            });
-        
-        return itm;
+                });
+            
+            
+            me.dd.children(cls).each(function() {
+                $(this).bind('touchstart', function() {
+                        me.itemSelect($(this).data('itm'));
+                        me.isBlurring = false;
+                })
+            }); 
+        }
+        else {
+            me.dd.off('mousemove mousedown click');
+            
+            me.dd.children(cls).each(function() {
+                $(this).unbind('touchstart');
+            }); 
+        }
     },
 
     
@@ -1181,6 +1193,13 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             // Clear any previous searching
             me.resetListHilighting();
+            
+            // Add option list item listeners on the dropdown after a small delay so that the
+            // mouse being present over the option list doesn't make the selection flicker or move
+            // to the wrong item because of a false 'mouseenter' event
+            setTimeout(function(){
+                me.optionListEventsActive(true);
+            }, 300);
             
             // Close the drop down when field loses focus.
             $(document).one('click:' + me.idCls,'*:not(.' +me.idCls+ ' input)', function(event) { 
