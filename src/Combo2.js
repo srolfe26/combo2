@@ -1135,19 +1135,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         var me = this,
             cls = '.' + me.itemCls;
         
+        // Add this listener separately because it can be turned on and off by the list scrolling
+        me.optionListMouseEnter(activate);
+        
         if (activate) {
             me.dd
-                .on('mousemove', cls, function(event) {
-                    event.stopPropagation();
-                    
-                    if (!Wui.isset(me.selected[0])) {
-                        me.itemSelect($(this).data('itm'));
-                    }
-                    
-                    if (me.selected[0].el[0] !== this) {
-                        me.itemSelect($(this).data('itm'));
-                    }
-                })
                 .on('mousedown', cls, function(event) {
                     event.stopPropagation();
                     me.isBlurring = false; 
@@ -1156,6 +1148,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     event.stopPropagation();
                     me.set();
                     me.close();
+                })
+                .on('mousemove', function() {
+                    // Moving the mouse within the bounds of the list generally should activate this
+                    // listener.
+                    me.optionListMouseEnter(true);
                 });
             
             
@@ -1163,7 +1160,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 $(this).bind('touchstart', function() {
                         me.itemSelect($(this).data('itm'));
                         me.isBlurring = false;
-                })
+                });
             }); 
         }
         else {
@@ -1172,6 +1169,46 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             me.dd.children(cls).each(function() {
                 $(this).unbind('touchstart');
             }); 
+        }
+    },
+    
+    
+    /**
+     * Adds the interaction listeners for the list items onto the list.
+     *
+     * @param   {Boolean}   activate    Required. Determines whether to turn these events on or off.
+     */
+    optionListMouseEnter: function(activate) {
+        var me = this,
+            cls = '.' + me.itemCls,
+            boundCls = 'wui-mm-bound';
+        
+        if (activate) {
+            // Add listener after a small delay so that the mouse being present over the option 
+            // list doesn't make the selection flicker or move to the wrong item because of a 
+            // false 'mouseenter' event.
+            me.mouseEnterListener = setTimeout(function() {
+                if (!me.dd.hasClass(boundCls)) {
+                    me.dd.on('mousemove.wui_list_elements', cls, function(event) {
+                        event.stopPropagation();
+                        
+                        if (!Wui.isset(me.selected[0])) {
+                            me.itemSelect($(this).data('itm'));
+                        }
+                        
+                        if (me.selected[0].el[0] !== this) {
+                            me.itemSelect($(this).data('itm'));
+                        }
+                        
+                        clearInterval(me.mouseEnterListener);
+                    }).addClass(boundCls);
+                }
+            }, 300);
+        }else {
+            if (me.mouseEnterListener) {
+                clearInterval(me.mouseEnterListener);
+            }
+            me.dd.off('mousemove.wui_list_elements').removeClass(boundCls);
         }
     },
 
@@ -1194,12 +1231,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             // Clear any previous searching
             me.resetListHilighting();
             
-            // Add option list item listeners on the dropdown after a small delay so that the
-            // mouse being present over the option list doesn't make the selection flicker or move
-            // to the wrong item because of a false 'mouseenter' event
-            setTimeout(function(){
-                me.optionListEventsActive(true);
-            }, 300);
+            // Set listeners when option list is open
+            me.optionListEventsActive(true);
             
             // Close the drop down when field loses focus.
             $(document).one('click:' + me.idCls,'*:not(.' +me.idCls+ ' input)', function(event) { 
@@ -1245,7 +1278,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
                 return  r; 
             })();
-            
+        
+        // If we are doing scroll to current, we are not using the mouse to navigate the list,
+        // and the 'mouseenter' listener can mess things up in the mouse is over the option list.
+        me.optionListMouseEnter(false);
         ofstP.animate( { scrollTop:offset }, 100 );
     },
     
