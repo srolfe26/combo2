@@ -121,7 +121,7 @@
  *               there are not too many search results. This is set with the `minKeys` attribute. The
  *               default value though is 1.
  *         - If there are no matching results, by default 'No Results.' will be shown in the options
- *           list. This message can be changed with the `emptyMsg` attribute.
+ *           list. This message can be changed with the `noResultsMessage` attribute.
  *
  * @param       Object      args    A configuration object containing overrides for the default configs
  *                                  below as well as methods in the prototype.
@@ -148,7 +148,7 @@ Wui.Combo2 = function(args, target) {
 
         // The message to display when a search yields no results, whether local or remote. May be
         // a plain text string, or HTML formatted.
-        emptyMsg: 'No Results.',
+        noResultsMessage: 'No Results.',
         
         // The text field for the combo. This field is specified in the constructor of the Combo (as
         // opposed to the prototype) because it must be a new DOM node for every instance of
@@ -493,11 +493,19 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             me._open = false;
             me.dd.addClass(me.hiddenCls);
             
+            // Change the dropdown button to a close button
+            me.el.find('.drop-down-switch').removeClass('open');
+            
+            // Make sure there is nothing weird left in the search box on close, it should 
+            // reflect the value of the field.
+            if ($.isPlainObject(me.value)) {
+                me.setFieldValue(me.value[me.titleItem]);
+            }
+            
             // Only reselect the field in the instance that the close options list button was pressed.
             if (me.isBlurring !== undefined) {
                 me.isBlurring = true;
                 me.field.focus().select();
-                
             }
         }
     },
@@ -741,7 +749,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      */
     hilightText: function(srchVal) {
         var me = this,
-            hilightCls = 'wui-highlight';
+            hilightCls = me.highlightCls;
 
         function clearHilight(obj) {
             return $(obj).find('.' + hilightCls).each(function() {
@@ -793,8 +801,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         // We have a search string, hilight and hide stuff
         if (Wui.isset(srchVal) && $.trim(srchVal).length !== 0) {
-            // Un-hide all optgroups
+            // Un-hide all optgroups and remove 'no results' message
             me.dd.find('.wui-optgroup-label.' + me.hiddenCls).removeClass(me.hiddenCls);
+            me.dd.find('.' + me.noResultsCls).remove();
             
             me.searchHTMLText(
                 srchVal,
@@ -803,7 +812,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             );
             
             // Clear disabled items in a search
-            me.dd.children('.wui-combo-disabled').addClass(me.hiddenCls);
+            me.dd.children('.' + me.disabledItemCls).addClass(me.hiddenCls);
             
             // Clear any optgroups that don't have visible items in them
             me.dd.children('.wui-optgroup-label').each(function() {
@@ -813,14 +822,14 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     group.addClass(me.hiddenCls);
                 }
             });
+            
+            // If there are no visible items, add the no results message as a disabled item
+            if (me.dd.children(':visible').length === 0) {
+                me.dd.prepend('<li class="' + me.noResultsCls + ' ' + me.disabledItemCls + '">' + me.noResultsMessage + '</li>');
+            }
         }
-        
-        // No search string, clear all hilighting, show all options/items
         else {
-            me.dd.find('.' + me.hiddenCls).removeClass(me.hiddenCls);
-            me.dd.find('.' + hilightCls).each(function() {
-                $(this).replaceWith($(this).html());
-            });
+            me.resetListHilighting();
         }
         
         Wui.positionItem(me.el, me.dd);
@@ -840,6 +849,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         me.selectTag = (Wui.isset(target)) ? $(target) : undefined;    
             
         $.extend(me, {
+            disabledItemCls:'wui-combo-disabled',
+            
                             // Build the field.
             el:             $('<div>').addClass('wui-form-field').append(
                                 me._setListeners()
@@ -848,11 +859,17 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                             // Create template engine and add applicable functions.
             engine:         new Wui.Smarty($.extend({html: me.template}, me.templateFn)),
             
+                            // The class used for highlighting list items
+            highlightCls:   'wui-highlight',
+            
                             // Used to tie the drop down and focus events back to the parent field.
             idCls:          me.selectTag ? Wui.id(me.selectTag.attr('name')) : Wui.id(),
             
                             // Array will contain objects that bind the Combo's data and DOM nodes.
             items:          [],
+            
+                            // Class for displaying no-results items
+            noResultsCls:   'no-results',
             
                             // If the user didn't specify multiselect, check the underlying select.
             multiSelect:    (me.multiSelect === true || (me.selectTag && me.selectTag.prop('multiple') === true)),
@@ -866,7 +883,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         // Create dropdown container.
         $('body').append(
-            me.dd = $('<ul>').addClass('wui-combo-dd ' + me.hiddenCls + ' ' + me.ddCls)
+            me.dd = $('<ul>')
+                .addClass('wui-combo-dd ' + me.hiddenCls + ' ' + me.ddCls)
+                // Prevent the field from losing focus if a user clicks on disabled items in the list
+                .on('click', '.' + me.disabledItemCls, function() {
+                    me.field.focus();
+                })
         );
         
         // Placeholder text should be set before the combo is build because if a disabled option
@@ -880,9 +902,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         me.el
             .addClass('wui-combo ' + me.idCls)
             .append(
-            // Add drop down button per configs
-            me.createOptionListToggle()
-        );
+                // Add drop down button per configs
+                me.createOptionListToggle()
+            );
         
         // Build the combo box
         if (me.selectTag) {
@@ -1076,7 +1098,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         // Show some feedback even with no data, or select current if it exists.
         if (me.data.length === 0) {
-            me.dd.html(me.emptyMsg);
+            me.dd.html(me.noResultsMessage);
         }
         else {
             me.hilightText(me.previous);
@@ -1154,6 +1176,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             me.lockBodyScroll(true);
             
+            // Change the dropdown button to a close button
+            me.el.find('.drop-down-switch').addClass('open');
+            
+            // Clear any previous searching
+            me.resetListHilighting();
+            
             // Close the drop down when field loses focus.
             $(document).one('click:' + me.idCls,'*:not(.' +me.idCls+ ' input)', function(event) { 
                 if (event.target !== me.field[0]) {
@@ -1167,6 +1195,22 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
     },
     
+    
+    /**
+     * Clears hilighting on the option list so when returning to the list without searching a
+     * previous search's result set doesn't mess things up.
+     */
+    resetListHilighting: function() {
+        var me = this;
+        
+        // Remove 'no results' messages added by this method
+        me.dd.find('.' + me.noResultsCls).remove();
+        
+        me.dd.find('.' + me.hiddenCls).removeClass(me.hiddenCls);
+        me.dd.find('.' + me.highlightCls).each(function() {
+            $(this).replaceWith($(this).html());
+        });
+    },
     
     /**
      * Scrolls the list to the currently selected item.
@@ -1510,7 +1554,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             // Set the field to the value
             if (selection.rec.disabled !== true) {
-                me.field.val(selection.rec[me.titleItem]);
+                me.setFieldValue(selection.rec[me.titleItem]);
                 me.setPlaceholder('');
                 me.toggleFieldSearchability();
             }
@@ -1541,6 +1585,30 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         
         // Calls listeners for valchange
         me.el.trigger($.Event('valchange'), [me, me.value, oldVal]);
+    },
+    
+    
+    /**
+     * Sets listeners on the field that give it HTML5 Datalist-like interactions
+     *
+     * @param       {String}     oldVal      The old value of the Combo2
+     *
+     * @returns     {jQuery}    The field object of the Combo2
+     */
+    setFieldValue: function(text) {
+        var me = this,
+            titleText = $.trim(text);
+            
+        text = titleText;
+
+        if (me.value && me.value.disabled !== true && titleText.length === 0 && $.trim(me.value[me.valueItem]).length === 0) {
+            titleText = 'A blank value is selected.';
+        }
+
+        me.field.val(text)
+            [((titleText.length > 0) ? 'attr' : 'removeAttr')]('title', titleText);
+        
+        return me.field;
     },
     
 
@@ -1595,7 +1663,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 // confused by the mouse hovering over an item.
                 if (event.keyCode == keys.TAB) {
                     if (!me._open) {
-                        me.set();
+                        me.val(me.value);
                     }
                     else if (me.forceSelect) {
                         // Should not tab when the option list is open - like standard <select>

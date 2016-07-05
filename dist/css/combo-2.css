@@ -73,6 +73,7 @@
     margin: 0;
     height: 26px;
     padding: 0 5px;
+    text-overflow: ellipsis;
 }
 
 /* Gets rid of the 'X' IE 10 & 11 add to the field */
@@ -108,6 +109,16 @@
     top: 50%;
     margin: -3px 0 0 -6px;
     position: absolute;
+}
+
+.wui-button.drop-down-switch.open {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAIpJREFUeNpiYBg0IC0tbT4QJxChLgGkFsZnQpI7CMR4DYHKzYeqBQNmGOPs2bMXjI2NH4IUgGgQH4fmxFmzZi3AMACfIbg0gwAjAacmQoWwasZpAJohDLg0owciWYCZCC9sxBWwWA1ADzBCscNMTFThM4SZkGZChiAHoj2+0AYBqFwiVO0gAQABBgCa7nF58FfcTQAAAABJRU5ErkJggg==);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.wui-button.drop-down-switch.open:after {
+    display: none;
 }
 
 /* IE8 Only uses \0screen */
