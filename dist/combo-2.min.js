@@ -1,4 +1,4 @@
-/*! Combo2 1.1.2
+/*! Combo2 1.1.3
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
