@@ -288,7 +288,7 @@ if (!Array.prototype.filter) {
  */
 !function(a,b,c){"undefined"!=typeof module&&module.exports?module.exports=c():a[b]=c()}(this,"verge",function(){function a(){return{width:k(),height:l()}}function b(a,b){var c={};return b=+b||0,c.width=(c.right=a.right+b)-(c.left=a.left-b),c.height=(c.bottom=a.bottom+b)-(c.top=a.top-b),c}function c(a,c){return a=a&&!a.nodeType?a[0]:a,a&&1===a.nodeType?b(a.getBoundingClientRect(),c):!1}function d(b){b=null==b?a():1===b.nodeType?c(b):b;var d=b.height,e=b.width;return d="function"==typeof d?d.call(b):d,e="function"==typeof e?e.call(b):e,e/d}var e={},f="undefined"!=typeof window&&window,g="undefined"!=typeof document&&document,h=g&&g.documentElement,i=f.matchMedia||f.msMatchMedia,j=i?function(a){return!!i.call(f,a).matches}:function(){return!1},k=e.viewportW=function(){var a=h.clientWidth,b=f.innerWidth;return b>a?b:a},l=e.viewportH=function(){var a=h.clientHeight,b=f.innerHeight;return b>a?b:a};return e.mq=j,e.matchMedia=i?function(){return i.apply(f,arguments)}:function(){return{}},e.viewport=a,e.scrollX=function(){return f.pageXOffset||h.scrollLeft},e.scrollY=function(){return f.pageYOffset||h.scrollTop},e.rectangle=c,e.aspect=d,e.inX=function(a,b){var d=c(a,b);return!!d&&d.right>=0&&d.left<=k()},e.inY=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.top<=l()},e.inViewport=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.right>=0&&d.top<=l()&&d.left<=k()},e});jQuery.extend(verge);
 
-/*! Combo2 1.1.0
+/*! Combo2 1.1.2
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
@@ -2583,7 +2583,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         
         // Remove 'no results' messages added by this method
         me.dd.find('.' + me.noResultsCls).remove();
-        
         me.dd.find('.' + me.hiddenCls).removeClass(me.hiddenCls);
         me.dd.find('.' + me.highlightCls).each(function() {
             $(this).replaceWith($(this).html());
@@ -3041,7 +3040,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 // confused by the mouse hovering over an item.
                 if (event.keyCode == keys.TAB) {
                     if (!me._open) {
-                        me.val(me.value);
+                        me.set();
                     }
                     else if (me.forceSelect) {
                         // Should not tab when the option list is open - like standard <select>
@@ -3069,6 +3068,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                                 me.selectAjacent(-1);
                                 break;
                             case keys.ESC:
+                                me.setVal(me.value);
                                 me.close();
                                 break;
                         }
@@ -3177,7 +3177,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     /**
      * Allows the value to be set via a simple or complex value.
      */
-    setVal: function(sv){
+    setVal: function(sv) {
         var me = this,
             searchItem = ($.isPlainObject(sv)) ? sv[me.valueItem] : sv,
             item = me.selectBy(me.valueItem, searchItem);

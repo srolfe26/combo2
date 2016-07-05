@@ -1205,7 +1205,6 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         
         // Remove 'no results' messages added by this method
         me.dd.find('.' + me.noResultsCls).remove();
-        
         me.dd.find('.' + me.hiddenCls).removeClass(me.hiddenCls);
         me.dd.find('.' + me.highlightCls).each(function() {
             $(this).replaceWith($(this).html());
@@ -1663,7 +1662,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 // confused by the mouse hovering over an item.
                 if (event.keyCode == keys.TAB) {
                     if (!me._open) {
-                        me.val(me.value);
+                        me.set();
                     }
                     else if (me.forceSelect) {
                         // Should not tab when the option list is open - like standard <select>
@@ -1691,6 +1690,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                                 me.selectAjacent(-1);
                                 break;
                             case keys.ESC:
+                                me.setVal(me.value);
                                 me.close();
                                 break;
                         }
@@ -1799,7 +1799,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     /**
      * Allows the value to be set via a simple or complex value.
      */
-    setVal: function(sv){
+    setVal: function(sv) {
         var me = this,
             searchItem = ($.isPlainObject(sv)) ? sv[me.valueItem] : sv,
             item = me.selectBy(me.valueItem, searchItem);
