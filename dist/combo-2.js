@@ -1641,6 +1641,32 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
+     * Adds the mouse enter / mousemove listener for the drop down list. This is spit out here because
+     * it needs to be added immediately when the dropdown opens as well as whenever it gets re-added
+     * when the arrow keys / scrolling have turned it off.
+     */
+    addMouseEnterListener: function() {
+        var me = this,
+            cls = '.' + me.itemCls,
+            boundCls = 'wui-mm-bound';
+        
+        
+        if (!me.dd.hasClass(boundCls)) {
+            me.dd
+                .addClass(boundCls)
+                .on('mousemove.wui_list_elements', cls, function(event) {
+                    event.stopPropagation();
+                    me.selectListItem($(this));
+                    
+                    if (me.mouseEnterListener) {
+                        clearInterval(me.mouseEnterListener);
+                    }
+                });
+        }
+    },
+    
+    
+    /**
      * Calculates the width of the drop down based on its contents
      */
     adjustDropDownSize: function() {
@@ -2523,21 +2549,23 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     me.isBlurring = false; 
                 })
                 .on('click', cls, function(event) {
+                    // Ensure that the clicked on item is selected given that we have a delay on the
+                    // mousemove event that usually adds this selection.
+                    me.selectListItem($(this));
                     event.stopPropagation();
                     me.set();
                     me.close();
                 })
-                .on('mousemove', function() {
-                    // Moving the mouse within the bounds of the list generally should activate this
-                    // listener.
+                // Moving the mouse within the bounds of the list generally should activate this listener.
+                .one('mousemove', function() {
                     me.optionListMouseEnter(true);
                 });
             
             
             me.dd.children(cls).each(function() {
                 $(this).bind('touchstart', function() {
-                        me.itemSelect($(this).data('itm'));
-                        me.isBlurring = false;
+                    event.stopPropagation();
+                    me.isBlurring = false;
                 });
             }); 
         }
@@ -2566,27 +2594,19 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             // list doesn't make the selection flicker or move to the wrong item because of a 
             // false 'mouseenter' event.
             me.mouseEnterListener = setTimeout(function() {
-                if (!me.dd.hasClass(boundCls)) {
-                    me.dd.on('mousemove.wui_list_elements', cls, function(event) {
-                        event.stopPropagation();
-                        
-                        if (!Wui.isset(me.selected[0])) {
-                            me.itemSelect($(this).data('itm'));
-                        }
-                        
-                        if (me.selected[0].el[0] !== this) {
-                            me.itemSelect($(this).data('itm'));
-                        }
-                        
-                        clearInterval(me.mouseEnterListener);
-                    }).addClass(boundCls);
-                }
+                me.addMouseEnterListener();
             }, 300);
         }else {
             if (me.mouseEnterListener) {
                 clearInterval(me.mouseEnterListener);
             }
-            me.dd.off('mousemove.wui_list_elements').removeClass(boundCls);
+            me.dd
+                .off('mousemove.wui_list_elements')
+                .removeClass(boundCls)
+                // put this listener back on the list in case we want to use it again
+                .one('mousemove', function() {
+                    me.optionListMouseEnter(true);
+                });
         }
     },
 
@@ -2622,6 +2642,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             me.sizeAndPositionDD();
             me.field.focus().select();
+            me.addMouseEnterListener();
         }
     },
     
@@ -2848,6 +2869,26 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
         else {
             me.notFound();
+        }
+    },
+    
+    
+    /**
+     * Selects list item based on whether the current item is already selected. This selection is
+     * a selection within the list, but does not necessarily set the value of the 'selected' item
+     * as the value or official selection on the field.
+     *
+     * @param   {jQuery}    item    The jQuery wrapped DOM node of the selected item.
+     */
+    selectListItem: function(item) {
+        var me = this;
+        
+        if (!Wui.isset(me.selected[0])) {
+            me.itemSelect(item.data('itm'));
+        }
+        
+        if (me.selected[0].el[0] !== item[0]) {
+            me.itemSelect(item.data('itm'));
         }
     },
     
