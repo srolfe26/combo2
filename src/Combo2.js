@@ -782,13 +782,32 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
         function clearHilight(obj) {
             return $(obj).find('.' + hilightCls).each(function() {
-                $(this).replaceWith($(this).html());
+                var parent = this.parentNode;
+                parent.replaceChild(this.firstChild, this);
+                parent.normalize();
             }).end();
         }
 
-        function addHilight(text) {
-            return text.replace( new RegExp(srchVal, "ig"), function(m) {
-                return '<span class="' +hilightCls+ '">' +m+ '</span>';
+        function addHilight(node) {
+            if (node.nodeType !== 3) {
+                return;
+            }
+
+            var textParts = node.nodeValue.split(srchVal);
+            if (textParts.length <= 0) {
+                return;
+            }
+
+            var parent = node.parentNode;
+            while (parent.hasChildNodes()) {
+                parent.removeChild(parent.lastChild);
+            }
+
+            textParts.forEach(function(textPart) {
+                parent.appendChild(document.createTextNode(textPart));
+                var hilightSpan = $('<span>', {'class': hilightCls});
+                hilightSpan.text(srchVal);
+                parent.appendChild(hilightSpan[0]);
             });
         }
 
@@ -804,21 +823,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             Array.prototype.forEach.call(node.childNodes, function(childNode) {
                 // Act on text nodes that are not blank, else recurse
                 if (childNode.nodeType == 3 && childNode.nodeValue.replace(/^\s+|\s+$/g, '').length > 0) {
-                    var hilightedText = addHilight(childNode.nodeValue),
-                        parsedNodes = $.parseHTML(hilightedText);
-                    
-                    // If there was zero parsed nodes, the text node probably contained an XSS injection.
-                    // Best to leave it as a text node.
-                    // If there is only one node, either no hilighting took place, do nothing; or 
-                    // the entire node was hilighted in which case it will have changed node type.
-                    if (parsedNodes.length > 1 || (parsedNodes.length === 1 && parsedNodes[0].nodeType != childNode.nodeType)) {
-                        // The parsed text is probably broken up into multiple nodes with the hilighting
-                        // so replace it with the one or more results.
-                        parsedNodes.forEach(function(parsedNode) {
-                            node.insertBefore(parsedNode, childNode);
-                        });
-                        node.removeChild(childNode);
-                    }
+                    addHilight(childNode);
                 }
                 else if (childNode.hasChildNodes()) {
                     hilightText(childNode);
