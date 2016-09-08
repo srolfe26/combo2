@@ -17,11 +17,11 @@
             }
         </style>
         
-        <!-- PRODUCTION FILES
+        <!-- PRODUCTION FILES -->
         <link rel="stylesheet" href="../dist/css/combo-2.min.css" type="text/css" media="all">
-        <script src="../dist/combo-2.min.js"></script>       -->  
+        <script src="../dist/combo-2.min.js"></script>      
 
-        <!-- SOURCE FILES -->
+        <!-- SOURCE FILES
             <link rel="stylesheet" href="../src/css/combo-2.css" type="text/css" media="all">
             <script src="../src/libs/es5-shim.js"></script>
             <script src="../src/libs/verge.js"></script>
@@ -29,7 +29,7 @@
             <script src="../src/Data.js"></script>
             <script src="../src/Smarty.js"></script>
             <script src="../src/Combo2.js"></script>
-         
+         -->
     </head>
     <body class="language-js">
         <div class="content">
@@ -44,13 +44,15 @@
                     <p>This code:</p>
                     
 <pre><code>standard_select = new Wui.Combo2(
+    // configs
     {
         width: '100%'
     },
     
     // jQuery object, DOM node, or selector string
     '#target'
-);</code></pre>
+);
+</code></pre>
                 </div>
                 
                 <div class="fifty">
@@ -112,6 +114,8 @@
                     <p>This code:</p>
                     
 <pre><code>no_filter = new Wui.Combo2({
+    // Below this threshold, the Combo behaves like a 
+    // regular select element, and doesn't search.
     searchThreshold: 7
 }, '#no_filter_target');</code></pre>
                 </div>
@@ -177,7 +181,7 @@
             </div> -->
             
             
-            <h2>Local Dataset</h2>
+            <h2>Local Dataset without target</h2>
             
             <div class="col-container">
                 <div class="fifty">
@@ -186,12 +190,13 @@
 <pre><code>local_dataset = new Wui.Combo2({
     width:  300,
     valueItem: 'id',
-    titleItem: 'name',
+    titleItem: 'person',
     data:   [
-        {id:0, name:"Jeff"},
-        {id:2, name:"Steve"},
-        {id:1, name:"Tim"}
+        {id:0, person:"Jeff"},
+        {id:1, person:"Tim"},
+        {id:2, person:"Steve"}
     ],
+    name: 'local_people',
     // 'append'|'prepend'|'before'|'after'
     append: $('#local_dom_target')
 });</code></pre>
@@ -199,6 +204,32 @@
                 
                 <div class="fifty" id="local_dom_target">
                     <p>Makes this:</p>           
+                </div>
+            </div>
+            
+            
+            <h2>Local Dataset with &lt;input&gt; target</h2>
+            
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>// Appends to &lt;input type="text" name="form_singers"&gt;
+local_with_target = new Wui.Combo2({
+    width:  300,
+    valueItem: 'id',
+    titleItem: 'person',
+    data:   [
+        {id:0, person:"Peter"},
+        {id:1, person:"Paul"},
+        {id:2, person:"Mary"}
+    ]
+}, $('[name="form_singers"]'));</code></pre>
+                </div>
+                
+                <div class="fifty" id="local_dom_target">
+                    <p>Makes this:</p>
+                    <input type="text" name="form_singers" />       
                 </div>
             </div>
             
@@ -256,17 +287,30 @@
             
             // Combo with its own dataset
             local_dataset = new Wui.Combo2({
-                width:  200,
+                width: 200,
                 valueItem: 'id',
-                titleItem: 'name',
+                titleItem: 'person',
                 data:   [
-                    {id:0, name:"Jeff"},
-                    {id:2, name:"Steve"},
-                    {id:1, name:"Tim"}
+                    {id:0, person:"Jeff"},
+                    {id:1, person:"Tim"},
+                    {id:2, person:"Steve"}
                 ],
+                name: 'local_people',
                 // 'append'|'prepend'|'before'|'after'
                 append: $('#local_dom_target')
             });
+            
+            // Appends to DOM element <input type="text" name="form_singers">
+            local_with_target = new Wui.Combo2({
+                width:  300,
+                valueItem: 'id',
+                titleItem: 'person',
+                data:   [
+                    {id:0, person:"Peter"},
+                    {id:1, person:"Paul"},
+                    {id:2, person:"Mary"}
+                ]
+            }, $('[name="form_singers"]'));
             
             // Remote Data
             remote = new Wui.Combo2({

@@ -1,6 +1,7 @@
 // Make sure the WUI is defined.
+/* jshint ignore:start */
 var Wui = Wui || {};
-
+/* jshint ignore:end */
 
 /**
  * Returns a string that will be a unique to use on the DOM. Output in the format 'prefix-n'.
@@ -10,7 +11,7 @@ var Wui = Wui || {};
  * @returns     {String}    The prefix plus a number that is incremented each time this function is called.
  */
 Wui.id = function(prefix) {
-    prefix = prefix || 'wui';
+    prefix = (Wui.isset(prefix) && prefix.length && prefix.length > 0) ? prefix : 'wui';
     
     return prefix +'-'+ (Wui.idCounter = ~~++Wui.idCounter);
 };

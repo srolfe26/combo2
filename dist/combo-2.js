@@ -288,7 +288,7 @@ if (!Array.prototype.filter) {
  */
 !function(a,b,c){"undefined"!=typeof module&&module.exports?module.exports=c():a[b]=c()}(this,"verge",function(){function a(){return{width:k(),height:l()}}function b(a,b){var c={};return b=+b||0,c.width=(c.right=a.right+b)-(c.left=a.left-b),c.height=(c.bottom=a.bottom+b)-(c.top=a.top-b),c}function c(a,c){return a=a&&!a.nodeType?a[0]:a,a&&1===a.nodeType?b(a.getBoundingClientRect(),c):!1}function d(b){b=null==b?a():1===b.nodeType?c(b):b;var d=b.height,e=b.width;return d="function"==typeof d?d.call(b):d,e="function"==typeof e?e.call(b):e,e/d}var e={},f="undefined"!=typeof window&&window,g="undefined"!=typeof document&&document,h=g&&g.documentElement,i=f.matchMedia||f.msMatchMedia,j=i?function(a){return!!i.call(f,a).matches}:function(){return!1},k=e.viewportW=function(){var a=h.clientWidth,b=f.innerWidth;return b>a?b:a},l=e.viewportH=function(){var a=h.clientHeight,b=f.innerHeight;return b>a?b:a};return e.mq=j,e.matchMedia=i?function(){return i.apply(f,arguments)}:function(){return{}},e.viewport=a,e.scrollX=function(){return f.pageXOffset||h.scrollLeft},e.scrollY=function(){return f.pageYOffset||h.scrollTop},e.rectangle=c,e.aspect=d,e.inX=function(a,b){var d=c(a,b);return!!d&&d.right>=0&&d.left<=k()},e.inY=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.top<=l()},e.inViewport=function(a,b){var d=c(a,b);return!!d&&d.bottom>=0&&d.right>=0&&d.top<=l()&&d.left<=k()},e});jQuery.extend(verge);
 
-/*! Combo2 1.1.3
+/*! Combo2 1.1.5
  * Copyright (c) 2016 Stephen Rolfe Nielsen
  *
  * https://github.com/srolfe26/combo2
@@ -297,8 +297,9 @@ if (!Array.prototype.filter) {
  */ 
 
 // Make sure the WUI is defined.
+/* jshint ignore:start */
 var Wui = Wui || {};
-
+/* jshint ignore:end */
 
 /**
  * Returns a string that will be a unique to use on the DOM. Output in the format 'prefix-n'.
@@ -308,7 +309,7 @@ var Wui = Wui || {};
  * @returns     {String}    The prefix plus a number that is incremented each time this function is called.
  */
 Wui.id = function(prefix) {
-    prefix = prefix || 'wui';
+    prefix = (Wui.isset(prefix) && prefix.length && prefix.length > 0) ? prefix : 'wui';
     
     return prefix +'-'+ (Wui.idCounter = ~~++Wui.idCounter);
 };
@@ -1383,7 +1384,8 @@ Wui.Smarty.prototype = {
  *
  * Examples
  * --------
- *
+ * 
+ * ```
  * // For the standard select box consumption
  *  standard_select = new Wui.Combo2({}, '#target');
  *
@@ -1399,7 +1401,7 @@ Wui.Smarty.prototype = {
  *     // 'append'|'prepend'|'before'|'after'
  *     append: // Some parent target to perform the append on
  * });
- *
+ * ```
  * 
  * Functionality
  * -------------
@@ -1501,15 +1503,16 @@ Wui.Smarty.prototype = {
  *         - If there are no matching results, by default 'No Results.' will be shown in the options
  *           list. This message can be changed with the `noResultsMessage` attribute.
  *
- * @param       Object      args    A configuration object containing overrides for the default configs
+ * @class Wui.Combo2
+ * 
+ * @param       {Object}    args    A configuration object containing overrides for the default configs
  *                                  below as well as methods in the prototype.
  *
- * @param       Node        target  Optional. A target can be a DOM node, a jQuery Object, or a selector
- *                                  string that returns one item that is expected to reference a <select>
+ * @param       {Node}      target  Optional. A target can be a DOM node, a jQuery Object, or a selector
+ *                                  string that returns one item that is expected to reference a select
  *                                  box that will have its data pulled into the Combo's data array.
  *
- * @returns     Object      The Wui.Combo2 object is returned. Should be called as:
- *                              combo = new Wui.Combo2({...}, select);
+ * @returns     {Object}    The Wui.Combo2 object is returned.
  */
 Wui.Combo2 = function(args, target) {    
     $.extend(this, {        
@@ -1539,15 +1542,26 @@ Wui.Combo2 = function(args, target) {
             spellcheck:         'false'
         }).addClass('wui-combo-search'),
         
-        // When true, the user MUST select an item from the option list.
+        /** 
+         * @property {Boolean} forceSelect The user MUST select an item from the option list when true.
+         * @memberof Wui.Combo2
+         */
         forceSelect: false,
         
+        // Class that is used for hiding items, when filtering
         hiddenCls: 'wui-hidden',
         
         // The minimum number of characters that must be in the field before a search will occur. If
         // searching against a very large dataset, increasing this number will help reduce the
         // size of the search results.
         minKeys: 1,
+        
+        /** 
+         * @property {String} name  The name of the hidden field within the combo2 control.
+         *                          This allows this control to be used within this form as well 
+         *                          as attached to existing DOM elements.
+         * @memberof Wui.Combo2
+         */
         
         // Text to put in the placeholder of the combo
         placeholder: '',
@@ -1602,11 +1616,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     /**
      * Add the element to the DOM where specified by parameters, object configs, or by default appended to the body.
      * 
-     * @param       {Node}      target      A node, jQuery object, or selector string for where to perform the action.
+     * @param       {Element}   target      A node, jQuery object, or selector string for where to perform the action.
      * @param       {string}    action      Name of a jQuery method that will be run against the object's element
      *                                      in the array ['appendTo','prependTo', 'before', 'after'].
      *                                      
-     * @returns     {Node}      The jQuery element of the Combo2
+     * @returns     {Element}   The jQuery element of the Combo2
      */
     addToDOM: function(target, action){
         var me = this,
@@ -1664,6 +1678,32 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 });
         }
     },
+
+    
+    /**
+     * Adds change listeners to the passed in target.
+     *
+     * @param   {Element}   target      An HTMLInputElement or HTMLSelectElement where the value is
+     *                                  stored for use in a form.
+     *
+     * @returns {Element}   The same target that was passed in, now with listeners.
+     */
+    addTargetBinding: function(target) {
+        var me = this;
+        
+        // Add listeners to mirror events between combo and the target, false makes the change 
+        // silent so the valchange listener below won't send the combo into an infinite loop.
+        target.on('change', function() {
+            me.val(target.val(), false);
+        });
+
+        // Set the value from the JS on the HTML field.
+        me.el.on('valchange', function(event, combo, newVal) {
+            target.val(me.valueToString(newVal));
+        });
+        
+        return target;
+    },
     
     
     /**
@@ -1672,15 +1712,16 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     adjustDropDownSize: function() {
         var me = this, 
             width,
-            widestChild = 0;
+            widestChild = 0,
+            ddElement = me.dd[0];
             
         // Look at the size of any style on the item, if width is explicity defined, 
         // don't change it here (max-width doesn't apply). Storing the variable here also makes
         // it so this is only calculated once, and so the effect of this method don't interfere
         // with future running of this method.
-        if (me.ddCSSRetrieved !== true) {
-            me.ddWidthStyle = Wui.getStylesForElement(me.dd[0]).width;
-            me.ddCSSRetrieved = true;
+        if (!Wui.isset(ddElement.CSSRetrieved)) {
+            ddElement.CSSRetrieved = Wui.getStylesForElement(ddElement);
+            ddElement.cssWidth = ddElement.CSSRetrieved.width;
         }
         
         // The drop down has to be display block, but we don't necessarily want to show it
@@ -1691,26 +1732,14 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         // Clear the current width on the field
         me.dd.css({width: ''});
         
-        if (isNaN(parseInt(me.ddWidthStyle)) && String(me.ddWidthStyle).indexOf('calc') !== 0) {
+        if (isNaN(parseInt(ddElement.cssWidth)) && String(ddElement.cssWidth).indexOf('calc') !== 0) {
             // As default, set drop-down width according to the width of the field
             width = (me.el.innerWidth() < 100) ? 100 : me.el.innerWidth();
-
-            // Look at the items in the drop down and determine the widest, then
-            // account for padding on the container
-            // me.dd.children(':not(.wui-hidden)').each(function(index, item) {
-            //     if(item.offsetWidth > widestChild) {
-            //         widestChild = item.offsetWidth;
-            //     }
-            // });
             
+            // Add the scrollbar width, just in case the content scrolls
             widestChild = me.dd.outerWidth() + Wui.getScrollbarWidth();
 
-            // // Account for margin/padding
-            // // Add the scrollbar width, just in case the content scrolls
-            // widestChild += (me.dd.outerWidth() - me.dd.width() + 1) + Wui.getScrollbarWidth();
-
             // Set drop-down to the widest between the field and its children
-            
             width = (width > widestChild) ? width : widestChild;
             me.dd.width(width);
         }
@@ -1746,7 +1775,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             if ((typeof attributeVal == 'string' || typeof attributeVal == 'number')) {
                 // Just for this implementation of Wui.Combo2
                 if (html_attr == 'name') {
-                    me.selectTag.attr(html_attr, attributeVal);
+                    me.target.attr(html_attr, attributeVal);
                 }
                 else {
                     attributesToApply[html_attr] = attributeVal;
@@ -1771,71 +1800,18 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         // }
     },
 
-    
-    /**
-     * Attach the combo box to a select box. The combo will assume the options of the select as its 
-     * data, and place itself in the DOM in the position of the select box. The select box will be 
-     * placed within the 'el' of the Wui.Combo and will be hidden, but still accessible.
-     *
-     * @param   {Node}  select  DOM node of a select box to attach the Wui.Combo
-     */
-    attachToElement: function(select) {
-        var me = this;
-
-        // Add an object observer on the select box so that value changes translate well
-        me.selectObserver($(select));
-
-        // Add listeners to mirror events between combo and select
-        select.on({
-            change: function() {
-                // false makes the change 'silent' so the second listener won't fire
-                me.val(select.val(), false);
-            }
-        });
-
-        me.el.on('valchange', function(event, combo, newVal) {
-            var foundItem,
-                setSelect = (function() {
-                    // In cases where there is not a null option in the select, make setting the
-                    // Combo2 to 'null' translate to a blank string. The value of the select may
-                    // be null anyway if there is no blank string option in the select.
-                    if(newVal === null) {
-                        foundItem = me.getItemBy(me.valueItem, newVal);
-                        if (!Wui.isset(foundItem)) {
-                            return "";
-                        }
-                        else {
-                            return newVal;
-                        }
-                    }
-                    else if ($.isPlainObject(newVal)) {
-                        return newVal[me.valueItem];
-                    }
-                    else {
-                        return newVal;
-                    }
-                })();
-
-            // Set the value from the JS on the HTML field.
-            select.val(setSelect);
-        });  
-    },
-
 
     /**
-     * Builds the combo and positions it on the DOM based on the selectTag target passed 
-     * to the combo.
+     * Builds the combo and positions itself in the DOM in the position of the select element passed
+     * to Combo2. The original select element will be placed within the 'el' of the Wui.Combo and 
+     * will be hidden, but still accessible.
      */
     buildComboFromSelect: function() {
-        var me = this;
+        var me = this,
+            select = me.target;
         
-        // Hide select box and replace it with the Combo2. Apply styles.
-        me.selectTag.after(me.el).addClass(me.hiddenCls).prependTo(me.el);
-        me.attachToElement(me.selectTag);
-        me.cssByParam();
-        
-        // Add a reference to the WUI field on the select tag
-        me.selectTag[0].wuiObj = me;
+        // Add object observer on the select element so programmatic changes fire a change event.
+        me.selectObserver(select);
         
         // Default data model returned from Wui.parseOptions();
         me.valueItem =  'value';
@@ -1849,18 +1825,22 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
         
         // Get data from the select
-        me.setData(Wui.parseSelect(me.selectTag));
-        
-        // Set value of Wui field to selected value
-        me.val(me.selectTag.val(), false);
+        me.setData(Wui.parseSelect(select));
     },
     
     
     /**
-     * Builds the combo from config parameters set on the Combo.
+     * Builds the combo from config parameters set on the Combo. This method of construction requires
+     * a DOM target to be specified in the configs for the component to be visible/usable on screen.
+     * See documentation for addToDOM() for more details on how to add a DOM target.
+     *
+     * This version of the combo2 will create a hidden field that gets updated with the valueItem when
+     * the value of the combo changes. This item can be named through the 'name' property.
+     * .
      */
     buildComboFromJS: function() {
-        var me = this;
+        var me = this,
+            target = me.target[0];
         
         // Create template if one hasn't been defined
         if (!(me.hasOwnProperty('template') && me.template !== null && me.template !== undefined) &&
@@ -1877,10 +1857,19 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             throw new Error('Wui.js - valueItem and titleItem, or template, are required configs for a Combo.');
         }
 
-        // Attach the target to a config based location
-        me.addToDOM();
+        // Modify the getter and setter on the input's value object so that a change event gets
+        // fired so that binding successfully works - creating an observable.
+        Object.defineProperty(target, 'value', {
+            get: function() {
+                return this.getAttribute("value");
+            },
+            set: function(val) {
+                this.setAttribute("value",val);
+                me.target.trigger('change');
+            }
+        });
 
-        // Loads data per the method appropriate for the config object
+        // Loads data per the method appropriate for the combo's configs.
         me.getSrcData();
     },
 
@@ -1966,10 +1955,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
 
     /**
-     * Applies styles from the parameters on the WUI object to the DOM elements, things such as attributes, CSS classes
-     * and inline definitions for height and width are set here.
+     * Applies styles from the parameters on the WUI object to the DOM elements, things such as
+     * attributes, CSS classes and inline definitions for height and width are set here.
      *
-     * @returns     {jQuery}    The DOM element  or 'el' of the current Wui object
+     * @returns     {Element}    The DOM element of the combo with the CSS attributes applied.
      */
     cssByParam: function() {
         var me = this,
@@ -2097,7 +2086,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             retVal;
         
         me.each(function(itm) {
-            if(itm.rec[key] !== undefined && itm.rec[key] === val) {
+            if (
+                itm.rec[key] !== undefined && itm.rec[key] === val || (
+                    $.isNumeric(val) && parseFloat(val) == parseFloat(itm.rec[key])
+                )
+            ) {
                 retVal = itm;
                 
                 // false breaks out of the loop when a match is found
@@ -2149,27 +2142,91 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
-     * Performs an unbound search for the search term (srchVal) within the options list and adds a span.wui-hilight
-     * class around all matches.
+     * Performs an unbound search for the search term (srchVal) within the options list and adds a
+     * span.wui-hilight class around all matches.
      *
      * @param   {string}    srchVal    A search term
      */
     hilightText: function(srchVal) {
         var me = this,
-            hilightCls = me.highlightCls;
+            hilightCls = me.highlightCls,
+            searchRegex = new RegExp(srchVal, "ig");
 
+        // Removing hilighting spans
         function clearHilight(obj) {
             return $(obj).find('.' + hilightCls).each(function() {
-                $(this).replaceWith($(this).html());
+                var parent = this.parentNode;
+                parent.replaceChild(this.firstChild, this);
+                parent.normalize();
             }).end();
         }
-
-        function addHilight(text) {
-            return text.replace( new RegExp(srchVal, "ig"), function(m) {
-                return '<span class="' +hilightCls+ '">' +m+ '</span>';
-            });
+        
+        // Shortcut for inserting one node after another
+        function insertAfter(referenceNode, newNode) {
+            referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+            
+            return newNode;
         }
 
+        // Adds span's within text nodes being searched
+        function addHilight(node) {
+            var parent = node.parentNode,
+                matches = [],
+                match,
+                searchString = node.nodeValue,
+                lastIndex = 0,
+                referenceNode = node;
+            
+            if (node.nodeType !== 3) {
+                return;
+            }
+            
+            // Generate a list of matches
+            while ((match = searchRegex.exec(searchString))) {
+                matches.push(match.index, searchRegex.lastIndex);
+            }
+            
+            if (matches.length === 0) {
+                return;
+            }
+            else {
+                matches.forEach(function(indexVal, arrayIndex) {
+                    if (arrayIndex % 2 === 0) {
+                        // Add plain text nodes for the spaces between the matches
+                        if(indexVal != lastIndex) {
+                            referenceNode = insertAfter(
+                                referenceNode, 
+                                document.createTextNode(searchString.slice(lastIndex, indexVal))
+                            );
+                        }
+                        
+                        // Add spans to highlight matches
+                        referenceNode = insertAfter(
+                            referenceNode,
+                            $('<span>', {'class': hilightCls}).text(
+                                searchString.slice(indexVal, matches[arrayIndex + 1])
+                            )[0]
+                        );
+                    }
+                    else {
+                        lastIndex = indexVal;
+                    }
+                });
+
+                // Pick up the end of the string and remove the original node
+                if(lastIndex != searchString.length) {
+                    insertAfter(
+                        referenceNode, 
+                        document.createTextNode(searchString.slice(lastIndex))
+                    );
+                }
+                
+                // we wait until the end to remove this node so we have a reference for its place
+                parent.removeChild(node);
+            }
+        }
+
+        // Recursive function that acts on text nodes or drills down to them to perform highlighting
         function hilightText(obj) {
             var node = (obj instanceof jQuery) ? obj[0] : obj;
             
@@ -2182,21 +2239,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             Array.prototype.forEach.call(node.childNodes, function(childNode) {
                 // Act on text nodes that are not blank, else recurse
                 if (childNode.nodeType == 3 && childNode.nodeValue.replace(/^\s+|\s+$/g, '').length > 0) {
-                    var hilightedText = addHilight(childNode.nodeValue),
-                        parsedNodes = $.parseHTML(hilightedText);
-                    
-                    // If there was zero parsed nodes, the text node probably contained an XSS injection.
-                    // Best to leave it as a text node.
-                    // If there is only one node, either no hilighting took place, do nothing; or 
-                    // the entire node was hilighted in which case it will have changed node type.
-                    if (parsedNodes.length > 1 || (parsedNodes.length === 1 && parsedNodes[0].nodeType != childNode.nodeType)) {
-                        // The parsed text is probably broken up into multiple nodes with the hilighting
-                        // so replace it with the one or more results.
-                        parsedNodes.forEach(function(parsedNode) {
-                            node.insertBefore(parsedNode, childNode);
-                        });
-                        node.removeChild(childNode);
-                    }
+                    addHilight(childNode);
                 }
                 else if (childNode.hasChildNodes()) {
                     hilightText(childNode);
@@ -2247,21 +2290,43 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * Init sets variables needed for the combo and its methods to function, as well as setting
      * the initial state of the field based on configs.
      *
-     * @param   {Node}  target  A DOM node, jQuery object, or selectot string for a target select 
-     *                          tag on the DOM.
+     * @param   {Element}   target  A DOM node, jQuery object, or selectot string for a target select 
+     *                              tag on the DOM.
      */
     init: function(target) {
         var me = this;
             
-        me.selectTag = (Wui.isset(target)) ? $(target) : undefined;    
+        // Build the field's DOM element
+        me.el = $('<div>')
+            .addClass('wui-form-field')
+            .append(
+                me._setListeners()
+            );
+        
+        // Combo2 will consume a select tag, an input or hidden field or will create its own hidden 
+        // element with a generated or specified name for form input.
+        target = $(target);
+        if  (target.length === 1 && (
+                target[0] instanceof HTMLSelectElement || 
+                target[0] instanceof HTMLInputElement && (
+                    target[0].type == 'text' || target[0].type == 'hidden'
+                )
+            )
+        ) {
+            // Puts the WUI field in place of the target on the DOM.
+            me.target = target
+                .after(me.el)
+                .addClass(me.hiddenCls)
+                .prependTo(me.el);
+        }
+        else {
+            // Create target and Attach the combo field to a config-based location om the DOM
+            me.target = $('<input type="hidden">').prependTo(me.el);
+            me.addToDOM();
+        }
             
         $.extend(me, {
             disabledItemCls:'wui-combo-disabled',
-            
-                            // Build the field.
-            el:             $('<div>').addClass('wui-form-field').append(
-                                me._setListeners()
-                            ),
             
                             // Create template engine and add applicable functions.
             engine:         new Wui.Smarty($.extend({html: me.template}, me.templateFn)),
@@ -2270,7 +2335,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             highlightCls:   'wui-highlight',
             
                             // Used to tie the drop down and focus events back to the parent field.
-            idCls:          me.selectTag ? Wui.id(me.selectTag.attr('name')) : Wui.id(),
+            idCls:          Wui.id(me.target.attr('name')),
             
                             // Class added to items, besides disabled ones, placed in the option list
             itemCls:        'wui-list-item',
@@ -2282,7 +2347,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             noResultsCls:   'no-results',
             
                             // If the user didn't specify multiselect, check the underlying select.
-            multiSelect:    (me.multiSelect === true || (me.selectTag && me.selectTag.prop('multiple') === true)),
+            multiSelect:    (me.multiSelect === true || (me.target && me.target.prop('multiple') === true)),
                             
                             // Set remote configs.
             searchLocal:    (me.url === null || me.autoLoad === true),
@@ -2316,13 +2381,21 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 me.createOptionListToggle()
             );
         
-        // Build the combo box
-        if (me.selectTag) {
+        // Build the combo box with the proper method based on the combo's target
+        if (me.target[0] instanceof HTMLSelectElement) {
             me.buildComboFromSelect();
         }
         else {
             me.buildComboFromJS();
         }
+        
+        // Add two-way binding with the target
+        me.addTargetBinding(me.target);
+        
+        // Add styling, a reference to the WUI field on the select tag, and set initial value
+        me.cssByParam();
+        me.target[0].wuiObj = me;
+        me.val(me.target.val(), false);
         
         me.toggleFieldSearchability();
     },
@@ -2580,13 +2653,12 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
-     * Adds the interaction listeners for the list items onto the list.
+     * Handles the mouse entering and leaving options in the list.
      *
      * @param   {Boolean}   activate    Required. Determines whether to turn these events on or off.
      */
     optionListMouseEnter: function(activate) {
         var me = this,
-            cls = '.' + me.itemCls,
             boundCls = 'wui-mm-bound';
         
         if (activate) {
@@ -2814,7 +2886,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * @param    {string}           key     The data item to look for
      * @param    {string|number}    val     The value to look for
      *
-     * @returns  An object containing the dataList, row, and record, or undefined if there was no matching row.
+     * @returns  {Object}           An object containing the dataList, row, and record, or undefined
+     *                              if there was no matching row.
      */
     selectBy: function() {
         var me = this,
@@ -2897,10 +2970,10 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * Overrides object change parameters so that if a select box is changed programmatically
      * that change events will still fire.
      *
-     * @param   {Node}      mySelect    A select box that will have its events communicated back and forth to and from
-     *                                  the Combo2 control
+     * @param   {Element}       mySelect    A select box that will have its events communicated back
+     *                                      and forth to and from the Combo2 control.
      *
-     * @returns {Node}      The item that was passed in
+     * @returns {Element}       The item that was passed in.
      */
     selectObserver: function(mySelect) {
         var me = this;
@@ -2916,7 +2989,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 },
                 set: function(val) {
                     option._selected = (val && (option.disabled !== true));
-                    option[(option._selected ? 'setAttribute' : 'removeAttribute')]('selected', true);                    
+                    option[(option._selected ? 'setAttribute' : 'removeAttribute')]('selected', true);
                     wui_select_observer(val);
                 }
             });
@@ -2934,9 +3007,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 i = option_length;
             
             // Mutations have occurred on the select
-            if (me.selectTag && option_length != me.total) {
+            if (me.target && option_length != me.total) {
                 // So reload the data
-                me.setData(Wui.parseSelect(me.selectTag));
+                me.setData(Wui.parseSelect(me.target));
                 
                 // Ensure the newly created options have the get/set listener
                 while(i--) {
@@ -2964,7 +3037,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 // Only fire the change event if at least one option is selected.
                 if (elem.hasSelected === true) {
                     // setTimeout necessary for operating after mutations on the select have occured.
-                    setTimeout(function(){
+                    setTimeout(function() {
                         // Setting selectedIndex is VITAL to the value being set properly on the
                         // select tag. When only setting the attribute on the option tag, the value
                         // doesn't always follow.
@@ -3231,8 +3304,8 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 // not receiving a true 'focus' event and shouldn't call the handler for the
                 // underlying field.
                 if (me.isBlurring !== true) {
-                    if (me.selectTag && me.isBlurring === undefined) {
-                        me.selectTag.triggerHandler('focus');
+                    if (me.target && me.isBlurring === undefined) {
+                        me.target.triggerHandler('focus');
                     }
                     
                     me.isBlurring = undefined;
@@ -3330,11 +3403,11 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
 
 
     /**
-     * Works similarly to jQuery's val() method. If arguments are omitted the value of the FormField will be returned.
-     * If arguments are specified the field's setVal() method and _setChanged() method are called, and the values
-     * passed in are passed through.
+     * Works similarly to jQuery's val() method. If arguments are omitted the value of the
+     * FormField will be returned. If arguments are specified the field's setVal() method and 
+     * _setChanged() method are called, and the values passed in are passed through.
      *
-     * @param       {[any]}     newVal      The type of this parameter depends on the type of form field
+     * @param       {any}     newVal      The type of this parameter depends on the type of form field
      *
      * @returns     Either the value of the field if no arguments are passed, or the value of the arguments passed in
      */
@@ -3348,7 +3421,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             var oldVal = me.value;
 
             // Set the actual value of the item
-            me.setVal.apply(me,arguments);
+            me.setVal.apply(me, arguments);
             
             // Call change listeners
             if(arguments[1] !== false)
@@ -3356,6 +3429,37 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             // Return the passed value(s)
             return arguments;
+        }
+    },
+    
+    
+    /**
+     * In cases where there is not a null option in the select, make setting the Combo2 to 'null' 
+     * translate to a blank string. The value of the select may be null anyway if there is no blank
+     * string option in the select.
+     *
+     * @param   {Object|String|null}    value   Any possible setting of the combo.value.
+     *
+     * @returns {String|null}           A string or null value, both acceptable values in HTMLInput/SelectElements.
+     */
+    valueToString: function(value) {
+        var me = this,
+            foundItem;
+
+        if(value === null) {
+            foundItem = me.getItemBy(me.valueItem, value);
+            if (!Wui.isset(foundItem)) {
+                return "";
+            }
+            else {
+                return value;
+            }
+        }
+        else if ($.isPlainObject(value)) {
+            return value[me.valueItem];
+        }
+        else {
+            return value;
         }
     }
 });

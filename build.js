@@ -2,11 +2,63 @@ var shell = require('shelljs');
 var buildJSHint = require('build-jshint');
 var UglifyJS = require("uglifyjs");
 var builder = require('wui-builder');
-var version = '1.1.3';
+var version = '1.1.5';
+var destination = './dist';
+
+
+var options = {};
+var alt_version;
+var doc_file_list = [];
+
+/********************************** PROCESS OPTIONS *******************************************/
+process.argv.slice(2).forEach(function (val, index, array) {
+    options[val] = index;
+});
+
+// Print help
+if (typeof options['--help'] != 'undefined') {
+    console.log('');
+    console.log('Wui.Combo2 Build Script');
+    console.log('=======================');
+    console.log('This build script will run linting on core-methods.js, Data.js, Smarty.js, and Combo2.js');
+    console.log('and then concatenate them into minfied and unminified files in the dist (or otherwise');
+    console.log('specified) folder.');
+    console.log('');
+    console.log('--help     Display the help menu');
+    console.log('--docs     Do extra processing to generate docs');
+    console.log('--version  If the version number is specified here, the output directory will be ');
+    console.log('           \'combo2-v[version]\' instead of \'dist\'');
+    console.log('');
+    console.log('');
+    
+    return;
+}
+
+if (typeof options['--version'] != 'undefined') {
+    alt_version = -1;
+    
+    for (var key in options) {
+        if (options[key] == options['--version'] + 1) {
+            alt_version = key;
+        }
+    }
+    
+    if (alt_version == -1) {
+        console.log('Version flag was used, but no version was given.');
+        return false;
+    }
+    else {
+        version = alt_version;
+        console.log(version);
+        destination = './combo2-v' + version;
+    }
+    
+}
+
 
 // Perform init
-shell.rm('-rf', './dist');
-shell.mkdir('-p', './dist/css');
+shell.rm('-rf', destination);
+shell.mkdir('-p', destination + '/css');
 
 
 // Customize copyright
@@ -81,6 +133,8 @@ buildJSHint(files, opts, function(err, hasError) {
         , './src/Smarty.js'
         , './src/Combo2.js'
     ]);
+    
+    
 
     // Create 'combo-2.js'
     builder.buildFile({
@@ -90,30 +144,57 @@ buildJSHint(files, opts, function(err, hasError) {
             builder.addCopyright(builder.concat(['./src/core-methods.js'])),
             combo
         ],
-        dest : './dist/combo-2.js',
+        dest : destination + '/combo-2.js',
         fn: []
     });
 
     // Create 'combo-2.min.js'
     builder.buildFile({
         src : [
-            UglifyJS.minify('./dist/combo-2.js').code
+            UglifyJS.minify(destination + '/combo-2.js').code
         ],   
-        dest : './dist/combo-2.min.js',
+        dest : destination + '/combo-2.min.js',
         fn: ['addCopyright']
     });
 
-    /********************************************** CSS *******************************************/
-    builder.cssMinify('./src/css/combo-2.css', './dist/css/combo-2.css', './src/css/');
 
-    if (hasError === true) {
-        console.log('---------------------------------------------------------------------------');
-        console.log(jshintErrors+ ' JSHINT ERROR(S) (SEE ABOVE). VERIFY THE BUILD IS OKAY.');
-        console.log('---------------------------------------------------------------------------');
+    /***************************************** DOCUMENTATION **************************************/
+    if (typeof options['--docs'] != 'undefined') {
+        console.log('... creating docs ...');
+        shell.mkdir('-p', destination + '/docs');
+        
+        files.map(function(file) {
+            var retval = {file: file, name: null};
+            
+            file.replace(/\/([\w-]+)\./g, function(match, name) {
+                retval.name = 'wui-' + name.toLowerCase(); 
+            });
+            
+            return retval;
+        }).forEach(function(obj) {
+            var filename = obj.name + '.json';
+            
+            doc_file_list.push('\'' + filename + '\'');
+            shell.exec('documentation build ' + obj.file + ' > ' +destination+ '/docs/' + filename);
+        });
+        
+        // Copy documentation interface
+        shell.cp('-R', './docs_src/', destination + '/docs');
+        shell.sed('-i', 'FILE_LIST_FROM_BUILD_SCRIPT', doc_file_list.join(','), destination + '/docs/assets/docsViews.js');
     }
-    else {
-        console.log('---------------------------------------------------------------------------');
-        console.log('BUILD COMPLETE AND LOOKING FINE.');
-        console.log('---------------------------------------------------------------------------');
-    }
+    
+
+    /********************************************** CSS *******************************************/
+    builder.cssMinify('./src/css/combo-2.css', destination + '/css/combo-2.css', './src/css/').done(function() {
+        if (hasError === true) {
+            console.log('---------------------------------------------------------------------------');
+            console.log(jshintErrors+ ' JSHINT ERROR(S) (SEE ABOVE). VERIFY THE BUILD IS OKAY.');
+            console.log('---------------------------------------------------------------------------');
+        }
+        else {
+            console.log('---------------------------------------------------------------------------');
+            console.log('BUILD COMPLETE AND LOOKING FINE.');
+            console.log('---------------------------------------------------------------------------');
+        }
+    });
 });
