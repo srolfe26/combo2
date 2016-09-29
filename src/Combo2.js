@@ -1257,8 +1257,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
             
             
             me.dd.children(cls).each(function() {
-                $(this).bind('touchstart', function() {
+                $(this).bind('touchstart', function(event) {
                     event.stopPropagation();
+                    event.preventDefault();
                     me.isBlurring = false;
                 });
             }); 
@@ -1962,10 +1963,23 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         
         return placeholder;
     },
-                    
+
 
     /**
-     * Allows the value to be set via a simple or complex value.
+     * Allows the value to be set via a simple or complex value by searching the
+     * available values in the options list/data set and selecting the matching
+     * item.
+     *
+     * NOTE: Because a blank string and null are both valid options in a
+     * HTMLSelectElement, calling this method with `undefined` for sv is the ONLY
+     * way to programmatically reset the field to an "un-interacted-with" state, and
+     * will only do so on a field that is not consuming a select element.
+     * It is important this behavior is not changed without fully understanding
+     * all implications.
+     *
+     * @param   {*|Object}  sv  A value of any type that is then searched for in
+     *                          the combo's data set. Undefined here resets the field.
+     * @returns {*|Object}
      */
     setVal: function(sv) {
         var me = this,

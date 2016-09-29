@@ -2,6 +2,7 @@ var shell = require('shelljs');
 var buildJSHint = require('build-jshint');
 var UglifyJS = require("uglifyjs");
 var builder = require('wui-builder');
+var jQuery = require('jquery-deferred');
 var version = '1.1.5';
 var destination = './dist';
 
@@ -9,6 +10,14 @@ var destination = './dist';
 var options = {};
 var alt_version;
 var doc_file_list = [];
+var files = [
+    './src/core-methods.js'
+    , './src/Data.js'
+    , './src/Smarty.js'
+    , './src/Combo2.js'
+];
+var css_promise;
+var doing_smarty = false;
 
 /********************************** PROCESS OPTIONS *******************************************/
 process.argv.slice(2).forEach(function (val, index, array) {
@@ -26,12 +35,21 @@ if (typeof options['--help'] != 'undefined') {
     console.log('');
     console.log('--help     Display the help menu');
     console.log('--docs     Do extra processing to generate docs');
+    console.log('--noie8    Don\'t include the ES5 shim code');
+    // console.log('--smarty   Just outputs Wui.Smarty in the distribution folder'); I'm doing this, but I don't want to advertise... yet.
     console.log('--version  If the version number is specified here, the output directory will be ');
     console.log('           \'combo2-v[version]\' instead of \'dist\'');
     console.log('');
     console.log('');
     
     return;
+}
+
+
+if (typeof options['--smarty'] != 'undefined') {
+    var files = ['./src/Smarty.js'];
+    destination = './wui-smarty';
+    doing_smarty = true;
 }
 
 if (typeof options['--version'] != 'undefined') {
@@ -58,7 +76,9 @@ if (typeof options['--version'] != 'undefined') {
 
 // Perform init
 shell.rm('-rf', destination);
-shell.mkdir('-p', destination + '/css');
+if (!doing_smarty) {
+    shell.mkdir('-p', destination + '/css');
+}
 
 
 // Customize copyright
@@ -117,45 +137,60 @@ var opts = {
         Wui: false
     }
 };
- 
-var files = [
-    './src/core-methods.js'
-    , './src/Data.js'
-    , './src/Smarty.js'
-    , './src/Combo2.js'
-];
 
 
 buildJSHint(files, opts, function(err, hasError) {
     /*********************************** START BUILDING *******************************************/
-    var combo = builder.concat([
-        './src/Data.js'
-        , './src/Smarty.js'
-        , './src/Combo2.js'
-    ]);
-    
-    
+    var buildSrc = [
+        './src/libs/es5-shim.js',
+        './src/libs/verge.js',
+        builder.addCopyright(builder.concat(['./src/core-methods.js'])),
+        builder.concat([
+            './src/Data.js'
+            , './src/Smarty.js'
+            , './src/Combo2.js'
+        ])
+    ];
 
-    // Create 'combo-2.js'
-    builder.buildFile({
-        src : [
-            './src/libs/es5-shim.js',
-            './src/libs/verge.js',
-            builder.addCopyright(builder.concat(['./src/core-methods.js'])),
-            combo
-        ],
-        dest : destination + '/combo-2.js',
-        fn: []
-    });
+    if (typeof options['--noie8'] != 'undefined') {
+        buildSrc.shift();
+    }
 
-    // Create 'combo-2.min.js'
-    builder.buildFile({
-        src : [
-            UglifyJS.minify(destination + '/combo-2.js').code
-        ],   
-        dest : destination + '/combo-2.min.js',
-        fn: ['addCopyright']
-    });
+    if (!doing_smarty) {
+        // Create 'combo-2.js'
+        builder.buildFile({
+            src: buildSrc,
+            dest: destination + '/combo-2.js',
+            fn: []
+        });
+
+        // Create 'combo-2.min.js'
+        builder.buildFile({
+            src : [
+                UglifyJS.minify(destination + '/combo-2.js').code
+            ],
+            dest : destination + '/combo-2.min.js',
+            fn: ['addCopyright']
+        });
+    }
+    else {
+        builder.buildFile({
+            src: [
+                builder.addCopyright(builder.concat(['./src/Smarty.js']))
+            ],
+            dest: destination + '/Smarty.js',
+            fn: []
+        });
+
+        // Create 'combo-2.min.js'
+        builder.buildFile({
+            src : [
+                UglifyJS.minify(destination + '/Smarty.js').code
+            ],
+            dest : destination + '/Smarty.min.js',
+            fn: ['addCopyright']
+        });
+    }
 
 
     /***************************************** DOCUMENTATION **************************************/
@@ -185,7 +220,14 @@ buildJSHint(files, opts, function(err, hasError) {
     
 
     /********************************************** CSS *******************************************/
-    builder.cssMinify('./src/css/combo-2.css', destination + '/css/combo-2.css', './src/css/').done(function() {
+    if (!doing_smarty) {
+        css_promise = builder.cssMinify('./src/css/combo-2.css', destination + '/css/combo-2.css', './src/css/');
+    }
+    else {
+        css_promise = jQuery.Deferred().resolve();
+    }
+
+    css_promise.done(function() {
         if (hasError === true) {
             console.log('---------------------------------------------------------------------------');
             console.log(jshintErrors+ ' JSHINT ERROR(S) (SEE ABOVE). VERIFY THE BUILD IS OKAY.');
