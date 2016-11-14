@@ -214,8 +214,8 @@ buildJSHint(files, opts, function(err, hasError) {
         });
         
         // Copy documentation interface
-        shell.cp('-R', './docs_src/', destination + '/docs');
-        shell.sed('-i', 'FILE_LIST_FROM_BUILD_SCRIPT', doc_file_list.join(','), destination + '/docs/assets/docsViews.js');
+        // shell.cp('-R', './docs_src/', destination + '/docs');
+        // shell.sed('-i', 'FILE_LIST_FROM_BUILD_SCRIPT', doc_file_list.join(','), destination + '/docs/assets/docsViews.js');
     }
     
 

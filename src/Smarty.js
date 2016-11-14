@@ -1,22 +1,30 @@
 /**
- * Wui.Smarty is a way to create DOM elements based on data. Wui.Smarty should be considered a replacement to Wui.Template
- * in that it addresses Wui.Template's vulnerabilities, namely:
- *      - The risk of XSS attack through use of inline functions
- *      - Inability to escape HTML and Javascript values
- *      - Inability to access nested variables in a fail-safe manner
- *      - Inability to "compile" the template - a 2X speed improvement in Wui.Smarty
+ * WUI Smarty
+ * =================================================================================================
+ * (A bare-bones implementation of basic smarty syntax in javascript)
  *
- * Wui.Smarty syntactically follows the familiar usage of placing variables in the template surrounded by braces (or curly
- * brackets). Data is set as a parameter to the make() method, and make() always returns a string. Functions are available
- * via a 'function' flag that will be described below. Additionaly, it borrows many features and syntax from the PHP
- * server-side templating system Smarty.
+ * Why
+ * ---
+ * Wui.Smarty is a way to create DOM elements based on data. Wui.Smarty should be considered a
+ * replacement to Wui.Template in that it addresses Wui.Template's vulnerabilities, namely:
+ * - The risk of XSS attack through use of inline functions
+ * - Inability to escape HTML and Javascript values
+ * - Inability to access nested variables in a fail-safe manner
+ * - Inability to "compile" the template - a 2X speed improvement in Wui.Smarty
  *
- *      (http://www.smarty.net/)
+ * Syntax
+ * ------
+ * Wui.Smarty syntactically follows the familiar usage of placing variables in the template
+ * surrounded by braces (or curly brackets). Data is set as a parameter to the make() method, and
+ * make() always returns a string. Functions are available via a 'function' flag that will be
+ * described below. Additionaly, it borrows many features and syntax from the PHP server-side
+ * templating system Smarty [http://www.smarty.net/](http://www.smarty.net/).
  *
- * Wui.Smarty will "compile" its template on the first run, meaning rather than parsing the template string with a regex on
- * every iteration, it will dynamically create a function on the first iteration that will then be called with the new data
- * of each subsequent iteration. This creates approximately a 2X speed advantage (tested on a 10,000 X 4 data set), even
- * with the more functionality in the template.
+ * Wui.Smarty will "compile" its template on the first run, meaning rather than parsing the template
+ * string with a regex on every iteration, it will dynamically create a function on the first
+ * iteration that will then be called with the new data of each subsequent iteration. This creates
+ * approximately a 2X speed advantage (tested on a 10,000 X 4 data set), even with the more
+ * functionality in the template.
  *
  * Template syntax can be understood through the follow examples, starting with the most simple:
  *
@@ -26,8 +34,8 @@
  *
  *      '<p>{name.last}, {name.first}</p>'
  *
- * As usual, values which don't exist will be returned as empty strings, however values that are set with a javascript
- * 'undefined' object will return 'undefined'.
+ * As usual, values which don't exist will be returned as empty strings, however values that are
+ * set with a javascript 'undefined' object will return 'undefined'.
  *
  * Another example shows the smarty syntax now, with the addition of flags:
  *
@@ -37,9 +45,10 @@
  *
  *      '<p>{name.last|upper|escape:html}, {name.first|capitalize|escape:html}</p>'
  *
- * Using functions to process parameters is possible, and is done in a strict manner that closes a potential
- * attack vector. Rather than effectively eval'ing code that is passed into the template, processing functions are
- * member methods of the template, and called with fixed parameters as in the following example:
+ * Using functions to process parameters is possible, and is done in a strict manner that closes a
+ * potential attack vector. Rather than effectively eval'ing code that is passed into the template,
+ * processing functions are member methods of the template, and called with fixed parameters as
+ * in the following example:
  *
  * Given the following template definition and data:
  *
@@ -65,7 +74,8 @@
  *      });
  *
  *      data.forEach(function(itm){
- *          $(template.make(itm)).appendTo('body');
+ *          $(template.make(itm))
+ *              .appendTo('body');
  *      });
  *
  * Will output the following:
@@ -76,48 +86,62 @@
  *      <p>Boy, 2</p>
  *      <p>Super-Fly, Six Months</p>
  *
- * Notice in this example, values processed by the function are parameters to the function flag, not named in the place
- * for variable names. This pattern allows for safer functions, defined with comments, and allows for more complex
- * operations including the use of closures. Globally defined methods can be referenced either directly or within
- * methods on the template config.
+ * Notice in this example, values processed by the function are parameters to the function flag, not
+ * named in the place for variable names. This pattern allows for safer functions, defined with
+ * comments, and allows for more complex operations including the use of closures. Globally defined
+ * methods can be referenced either directly or within methods on the template config.
  *
  * Avaialble modifiers/flags are:
+ * ------------------------------
+ * - capitalize: Will capitalize the first letter of every word in the string
+ * - default: Accepts a parameter to use as a default value if variable is a blank string.
+ *   Example: {undefinedVar|default:"Default Text"}
+ * - escape: Used to encode special characters. Accepts 'html', 'javascript', 'json' and 'url'
+ * - function: Will call a function within the scope of the template. Parameters are the function
+ *   name, and then arguments to pass.
+ *    - Example {|function:funcName:param1Name:param2Name:...} When functions are used, the function
+ *      flag MUST be the first one, and the the key value MUST be blank since the keys are
+ *      parameters to the function.
+ * - lower: Equivalent to toLowerCase()
+ * - unescape: Used to decode, countering the effect of the escape modifier (Accepts 'html',
+ *   'javascript', 'json' and 'url')
+ * - upper: Equivalent to toUpperCase()
  *
- *      capitalize  Will capitalize the first letter of every word in the string
+ * @class Wui.Smarty
  *
- *      default     Accepts a parameter to use as a default value if variable is a blank string. Example: {undefinedVar|default:"Default Text"}
+ * @author  Stephen Nielsen (rolfe.nielsen@gmail.com)
  *
- *      escape      Used to encode special characters. Accepts 'html', 'javascript', 'json' and 'url'
+ * @param   {Object}        configs         A configuration object which at a minimum contains the html
+ *                                          template and may additionally have function definitions
+ *                                          called from the template.
  *
- *      function    Will call a function within the scope of the template. Parameters are the function name, and then arguments to pass.
- *                  Example {|function:funcName:param1Name:param2Name:...} When functions are used, the function flag MUST be the first one,
- *                  and the the key value MUST be blank since the keys are parameters to the function.
+ * @param   {string}        configs.html    The template string that will be used.
  *
- *      lower       Equivalent to toLowerCase()
+ * @param   {function}      [configs.fn__] Zero or more functions that can be called from the
+ *                                          `{|function:function_name...}` items within the template
+ *                                          string.
  *
- *      unescape    Used to decode, countering the effect of the escape modifier (Accepts 'html', 'javascript', 'json' and 'url')
- *
- *      upper       Equivalent to toUpperCase()
- *
+ * @returns {Object}    The Wui.Smarty object is returned.
  */
-Wui.Smarty = function(args) {
+Wui.Smarty = function(configs) {
     $.extend(this, {
-        html:       '',
+        html:       ''
+    }, configs, {
         compiled:   null,
         build:      [],
         __s:        ""
-    }, args);
+    });
 };
 
 
 Wui.Smarty.prototype = {
-    /*
+    /**
      * Given an array of flags, applies them on the value passed in
      *
      * @param   {string}    str     A string that will have the flags applied
      * @param   {array}     flags   An array of flags that will be parsed and functions applied
      *
-     * @return  {string}    The string passed in as 'str' with the flag functions applied
+     * @returns {string}    The string passed in as 'str' with the flag functions applied
      */
     applyFlags: function(str, flags){
         var me = this;
@@ -159,7 +183,7 @@ Wui.Smarty.prototype = {
                 if (flag == 'default') {
                     flag = 'defaultVal';
                 }
-                
+
                 if (typeof me[flag] !== 'function') {
                     new Error('wui-smarty.js - Unsupported flag: \'' + flag + '\'.');
                 }
@@ -180,11 +204,12 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Capitalizes the first letter of every word in the string
      *
      * @param   {string}    str     A string to be capitalized. ie: "foo bar baz"
-     * @return  {string}    Capitalized string. ie: "Foo Bar Baz"
+     *
+     * @returns {string}    Capitalized string. ie: "Foo Bar Baz"
      */
     capitalize: function(str) {
         return String(str).replace(/\w\S*/g, function(txt) {
@@ -193,12 +218,13 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
-     * Allows a named function to be chainable through using the common me.__s
+    /**
+     * Allows a named function to be chain-able through using the common me.__s
      *
      * @param   {string}    fn     The name of a function to call within the context of this object
      * @param   {array}     params Array of parameters to be passed into function
-     * @return  {object}    A reference to the template object so that chaning can occur
+     *
+     * @returns {object}    A reference to the template object so that chaning can occur
      */
     chain: function(fn, params) {
         var me = this;
@@ -210,11 +236,11 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Turns the build array into a function that will be run in all future uses
      * of the template. Makes use of me.build[] to create the function.
      *
-     * @return  {function}  The compiled function
+     * @returns {function}  The compiled function
      */
     compile: function() {
         var me = this,
@@ -262,13 +288,13 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Returns the string passed in, or the default string if the value is blank.
      *
      * @param   {string}    str     Any string
      * @param   {string}    default A value to replace a blank string with
      *
-     * @return  {string}    The value string passed in, or the default value
+     * @returns {string}    The value string passed in, or the default value
      */
     defaultVal: function(str, dflt) {
         // A blank or undefined string will evaluate to false in JS
@@ -304,52 +330,52 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Escape a string for a given type of output, or reverse that escaping
      *
      * @param   {string}    str         The string to escape/unescape
      * @param   {string}    type        String containing the escape type ('html'|'javascript'|'json'|'url')
      * @param   {boolean}   unescape    Flag to reverse the usual escape sequence
      *
-     * @return  {string}    An escaped string.
+     * @returns {string}    An escaped string.
      */
     escape: function(str, type, unescape) {
         unescape = unescape || false;
 
-        var me = this,
-            actions = {
-                html: function() {
-                    var baseMap = me.escapeHTML,
-                        map = unescape ? me.invert(baseMap) : baseMap,
-                        regex = new RegExp('[' + me.getKeys(map).join('').replace(/\//,'\\/') + ']', 'g');
+        var me = this;
+        var actions = {
+            html: function() {
+                var baseMap = me.escapeHTML,
+                    map = unescape ? me.invert(baseMap) : baseMap,
+                    regex = new RegExp('[' + me.getKeys(map).join('').replace(/\//,'\\/') + ']', 'g');
 
-                    return String(str).replace(regex, function(match) {
-                        return map[match];
-                    });
-                },
-                
-                javascript: function() {
-                    var baseMap = me.escapeJS,
-                        map = unescape ? me.invert(baseMap) : baseMap,
-                        // The JS regex cannot be constructed like the HTML one above because the JS string
-                        // has to be escaped to be made into a regex, but then the map won't work.
-                        regex = unescape ? /\\\\|\'|\\"|\\r|\\n|<\//g : /<\/|"|'|\\|\n|\r/g;
+                return String(str).replace(regex, function(match) {
+                    return map[match];
+                });
+            },
+            
+            javascript: function() {
+                var baseMap = me.escapeJS,
+                    map = unescape ? me.invert(baseMap) : baseMap,
+                    // The JS regex cannot be constructed like the HTML one above because the JS string
+                    // has to be escaped to be made into a regex, but then the map won't work.
+                    regex = unescape ? /\\\\|\\'|\\"|\\r|\\n|<\//g : /<\/|"|'|\\|\n|\r/g;
 
-                    return String(str).replace(regex, function(match) {
-                        return map[match];
-                    });
-                },
-                
-                json: function() {
-                    var action = unescape ? 'parse' : 'stringify';
-                    return JSON[action](str);
-                },
-                
-                url: function() {
-                    var action = unescape ? 'decodeURI' : 'encodeURI';
-                    return JSON[action](str);
-                }
-            };
+                return String(str).replace(regex, function(match) {
+                    return map[match];
+                });
+            },
+            
+            json: function() {
+                var action = unescape ? 'parse' : 'stringify';
+                return JSON[action](str);
+            },
+            
+            url: function() {
+                var action = unescape ? 'decodeURI' : 'encodeURI';
+                return JSON[action](str);
+            }
+        };
 
         if(typeof actions[type] === 'function') {
             return actions[type]();
@@ -360,16 +386,19 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Returns the keys of an object as an alphabetically sorted array.
      *
-     * @param   {object}    obj     Any plain object. Example:
+     * @param   {object}    obj     Any plain object. For example the following output will return
+     *                              the values in the return statement:
+     *
      *                              {
      *                                  asdf: 1,
      *                                  zxcv: 2,
      *                                  qwer: 3
      *                              }
-     * @return  {array}     Sorted array of object keys. i.e: ['asdf', 'qwer', 'zxcv'].
+     *
+     * @returns {Array}     Sorted array of object keys. i.e: `['asdf', 'qwer', 'zxcv']`.
      */
     getKeys: function(obj){
         var retArray = [];
@@ -380,32 +409,31 @@ Wui.Smarty.prototype = {
             });
         }
 
-        return retArray.sort();
+        return (retArray.sort());
     },
 
 
-    /*
-     * Inverts an object so that its keys are its values, and its values are its keys.
-     * Complex values will be dropped (functions, arrays, and objects). If a non-object,
-     * or an empty object is passed in, an empty object will be returned.
+    /**
+     * Determines whether the property exists in the passed in object
      *
      * @param   {object}    obj         The object to be searched within.
      * @param   {string}    property    A string of the property to search for within 'obj'.
      *
-     * @return  {boolean}   Whether the property exists within the object
+     * @returns {boolean}   Whether the property exists within the object
      */
     hasProperty: function(obj, property) {
         return obj !== null && typeof obj === 'object' && (property in obj);
     },
 
 
-    /*
+    /**
      * Inverts an object so that its keys are its values, and its values are its keys.
      * Complex values will be dropped (functions, arrays, and objects). If a non-object,
      * or an empty object is passed in, an empty object will be returned.
      *
      * @param   {object}    obj     The object to be inverted.
-     * @return  {object}    The passed in object copied and inverted, or an empty object.
+     *
+     * @returns {object}    The passed in object copied and inverted, or an empty object.
      */
     invert: function(obj) {
         var retObj = {};
@@ -423,15 +451,15 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Looks for a javascript function and passes parameters to it
      *
-     * @param   {string}    fn      The name of a function that has been added as a config
-     *                              to an instance of this template
-     * @param   {string}    ...     Zero or more names of parameters to be looked up in the
-     *                              template's data record
+     * @param   {string}    fn          The name of a function that has been added as a
+     *                                  config to an instance of this template.
+     * @param   {string}    [name__]    Zero or more names of parameters to be looked
+     *                                  up in the template's data record.
      *
-     * @return  {string}    The return value from the function
+     * @returns {string}    The return value from the function
      */
     js_function: function(fn){
         var me = this,
@@ -446,13 +474,14 @@ Wui.Smarty.prototype = {
     },
 
 
-    /* Determine whether a key exists in the record, and either inserts it into the template,
+    /**
+     * Determine whether a key exists in the record, and either inserts it into the template,
      * or safely ignores it and inserts a blank string.
      *
      * @param   {object}    rec     The data object to look for values in
-     * @param   {string}    key     A string containing a refence to a value to return
+     * @param   {string}    key     A string containing a reference to a value to return
      *
-     * @return  {string}    Either the value referenced in key, or a blank string if the value
+     * @returns {string}    Either the value referenced in key, or a blank string if the value
      *                      did not exist.
      */
     lookup: function(rec, key) {
@@ -489,22 +518,24 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Capitalizes the entire string.
      *
      * @param   {string}    str     A string to be capitalized. ie: "FOO BAR BAZ"
-     * @return  {string}    Lower-case string. ie: "foo bar baz"
+     *
+     * @returns {string}    Lower-case string. ie: "foo bar baz"
      */
     lower: function(str) {
         return String(str).toLowerCase();
     },
 
 
-    /*
+    /**
      * Returns a filled template. One of the important features of this method is to
      *
      * @param   {object}    rec     Data to fill into the template
-     * @return  {string}    A template string with data values filled in
+     *
+     * @returns {string}    A template string with data values filled in
      */
     make: function(rec){
         var me = this;
@@ -538,7 +569,7 @@ Wui.Smarty.prototype = {
      * the build array which is used to create the 'compiled' function. Also fills the template
      * string with values for the current record.
      *
-     * @returns     String      The full template string with comments removed and values inserted.
+     * @returns     {string}    The full template string with comments removed and values inserted.
      */
     parse: function() {
         var me = this,
@@ -580,13 +611,16 @@ Wui.Smarty.prototype = {
     },
     
     
-    /*
+    /**
      * Trims any set of custom characters off of the beginning and end of a string
      *
      * @param   {string}    str         The string to trim
-     * @param   {string}    characters  An undelimited string of characters to trim off both sides of the string
-     * @param   {string}    flags       Optional. Regex flags that would be used in a javascript regex. Defaults to 'g'.
-     * @return  {string}    A trimmed string
+     * @param   {string}    characters  An undelimited string of characters to trim off both sides
+     *                                  of the string.
+     * @param   {string}    flags       Optional. Regex flags that would be used in a javascript
+     *                                  regex. Defaults to 'g'.
+     *
+     * @returns {string}    A trimmed string
      */
     trimSpecial: function trim(str, characters, flags) {
         flags = flags || "g";
@@ -601,23 +635,25 @@ Wui.Smarty.prototype = {
     },
     
     
-    /*
+    /**
      * Unescape a string for a given type of output.
      *
      * @param   {string}    str         The string to escape/unescape
      * @param   {string}    type        String containing the escape type ('html'|'javascript'|'json'|'url')
-     * @return  {string}    An unescaped string.
+     *
+     * @returns {string}    An unescaped string.
      */
     unescape: function(str, type){
         return this.escape(str, type, true);
     },
     
     
-    /*
+    /**
      * Makes the entire string lower-case.
      *
      * @param   {string}    str     A string to be capitalized. ie: "foo bar baz"
-     * @return  {string}    Capitalized string. ie: "FOO BAR BAZ"
+     *
+     * @returns {string}    Capitalized string. ie: "FOO BAR BAZ"
      */
     upper: function(str) {
         return String(str).toUpperCase();

@@ -1,0 +1,404 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Helvetica, Arial, Verdana, sans-serif;
+    text-align: left;
+}
+
+* {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+a {
+    color: #fa6;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #e93;
+}
+
+.content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2em 0 0;
+}
+
+h2 {
+    margin-top: 4em;
+    font-size: 20px;
+}
+
+h3 {
+    font-weight: 100;
+    margin: 2em 0 0.5em;
+}
+
+
+p {
+    margin: 0.5em;
+    font-size: 14px;
+}
+
+p:first-child {
+    margin-top: 0;
+}
+
+li p {
+    font-size: 12px;
+    font-weight: 100;
+}
+
+input, select {
+    display: inline-block;
+    max-width: 100%;
+}
+
+pre {
+    font-size: 12px;
+}
+
+.col-container {
+    border: 1px dotted #ddd;
+}
+
+.col-container > div {
+    padding: 1em;
+}
+
+.fifty {
+    float: left;
+    width: 50%;
+}
+
+.fifty:nth-child(2n - 1) {
+    border-right: 1px dotted #ddd;
+}
+
+.col-container:after {
+    content: "";
+    height: 0;
+    overflow: hidden;
+    display: block;
+    clear: both;
+}
+
+.param-list {
+    font-weight: normal;
+    font-size: 14px;
+    margin-left: 0.5em;
+    color: #777;
+    font-style: italic;
+}
+
+.param-list:before {
+    content: "("
+}
+
+.param-list:after {
+    content: ")"
+}
+
+.param_name {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.param_type {
+    font-weight: 100;
+    font-size: 12px;
+    margin-left: 1em;
+    color: #777;
+}
+
+.markup {
+    font-family: monospace;
+    font-weight: 600;
+    color: #777;
+}
+
+.returns-list {
+    font-weight: normal;
+    font-size: 12px;
+    margin-right: 0.5em;
+    text-transform: lowercase;
+}
+
+.return-item {
+    background-color: #dadada;
+    padding: 0.5em;
+    margin: 0.5em;
+    color: #666;
+    font-weight: 200;
+    font-size: 12px;
+    position: relative;
+    padding-left: 125px;
+}
+
+.return-item p {
+    margin-bottom: 0.5em;
+}
+
+.returns_type {
+    position: absolute;
+    left: 0.5em;
+    top: 1em;
+    width: 105px;
+    text-align: right;
+    font-weight: bold;
+    color: #333;
+}
+
+.returns_type:before {
+    content: "returns ";
+}
+
+#docs-container {
+    display: flex;
+}
+
+.docs-panel {
+    height: 100vh;
+    flex: 1;
+    padding: 1em;
+    overflow: auto;
+    border-right: 3px solid #333;
+    position: relative;
+}
+
+.docs-panel:last-child {
+    border-right: 0;
+}
+
+.toggle-view {
+    position: absolute;
+    right: 0.5em;
+    top: 0.5em;
+    width: 32px;
+    height: 32px;
+    background: #eee;
+    border: none;
+    font-size: 20px;
+    font-weight: 100;
+}
+
+.toggle-view:focus {
+    outline: 0;
+}
+
+.collapsed-panel {
+    max-width: 55px;
+    opacity: 0.35;
+}
+
+.collapsed-panel:after {
+    content: "";
+    height: 100%;
+    position: absolute;
+    right: -1px;
+    top: 0;
+    box-shadow: 0 0 19px 6px #000;
+    z-index: 1;
+    width: 1px;
+    display: block;
+}
+
+.member-of:after {
+    content: ")";
+}
+.member-of:before {
+    content: "(member of ";
+}
+.member-of {
+    font-size: 12px;
+    font-weight: 100;
+    color: #777;
+    font-style: italic;
+}
+
+.optional-type:after {
+    content: "optional";
+    display: inline-block;
+    margin-left: 0.5em;
+    padding: 0.15em 0.5em;
+    background-color: #d8d8d8;
+    border-left: 4px solid #aef;
+    border-radius: 4px;
+}
+
+.class-params {
+    margin: 2em 0;
+    background-color: #f4f4f4;
+    padding: 4em 2.5em;
+    border-bottom: 3px solid #ccc;
+    position: relative;
+}
+
+.class-params:before {
+    content: "class parameters";
+    position: absolute;
+    top: 0.5em;
+    left: 0.5em;
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: bold;
+    color: #777;
+}
+
+.author:before {
+    content: "author:";
+    color: #333;
+    text-transform: uppercase;
+    font-size: 10px;
+    margin: 0 1em;
+    font-weight: 200;
+}
+
+
+/* http://prismjs.com/download.html?themes=prism&languages=markup+css+clike+javascript */
+/**
+ * prism.js default theme for JavaScript, CSS and HTML
+ * Based on dabblet (http://dabblet.com)
+ * @author Lea Verou
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+    color: black;
+    background: none;
+    text-shadow: 0 1px white;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.5;
+
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+}
+
+pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,
+code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {
+    text-shadow: none;
+    background: #b3d4fc;
+}
+
+pre[class*="language-"]::selection, pre[class*="language-"] ::selection,
+code[class*="language-"]::selection, code[class*="language-"] ::selection {
+    text-shadow: none;
+    background: #b3d4fc;
+}
+
+@media print {
+    code[class*="language-"],
+    pre[class*="language-"] {
+        text-shadow: none;
+    }
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+    padding: 1em;
+    margin: .5em 0;
+    overflow: auto;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+    background: #f5f2f0;
+}
+
+.class-params pre[class*="language-"] {
+    background-color: #fff;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+    padding: .1em;
+    border-radius: .3em;
+    white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: slategray;
+}
+
+.token.punctuation {
+    color: #999;
+}
+
+.namespace {
+    opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+    color: #905;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+    color: #690;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+    color: #a67f59;
+    background: hsla(0, 0%, 100%, .5);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+    color: #07a;
+}
+
+.token.function {
+    color: #DD4A68;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+    color: #e90;
+}
+
+.token.important,
+.token.bold {
+    font-weight: bold;
+}
+.token.italic {
+    font-style: italic;
+}
+
+.token.entity {
+    cursor: help;
+}

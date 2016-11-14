@@ -1,10 +1,29 @@
-// Make sure the WUI is defined.
+/**
+ * WUI Core Methods
+ * =================================================================================================
+ * A collection of useful helper methods that are used throughout the WUI.
+ *
+ * @namespace Wui
+ *
+ * @author  Stephen Nielsen (rolfe.nielsen@gmail.com)
+ */
 /* jshint ignore:start */
-var Wui = Wui || {};
+// Make sure the WUI is defined.
+window.Wui = function() {
+    return Wui || {};
+};
 /* jshint ignore:end */
 
+
 /**
- * Returns a string that will be a unique to use on the DOM. Output in the format 'prefix-n'.
+ * Returns a string that will be a unique id to use on the DOM. Output in the format 'prefix-n'.
+ *
+ * Wui.id();
+ * // returns wui-0;
+ *
+ * Wui.id('ts');
+ * // returns ts-1;
+ *
  *
  * @param       {String}    prefix      Optional. A string to use before the number. Default is 'wui'.
  *
@@ -16,31 +35,33 @@ Wui.id = function(prefix) {
     return prefix +'-'+ (Wui.idCounter = ~~++Wui.idCounter);
 };
 
+
 /**
  * Shorthand for typing typeof comparisons everywhere.
  *
- * @param       {Object}    v   Only an object in the sense that everything in JS is an object. It
- *                              can be any variable you want to check whether it is defined.
+ * @param       {Object}    key     Only an object in the sense that everything in JS is an object. It
+ *                                  can be any variable you want to check whether it is defined.
  *
  * @returns     {Boolean}   True if the item is not undefined.
  */
-Wui.isset = function(v) {
-    return (typeof v !== 'undefined');
+Wui.isset = function(key) {
+    return (typeof key !== 'undefined');
 };
 
 
 /**
  * Gets the maximum CSS z-index on the page and returns one higher, or one if no z-indexes are defined.
  *
- * @param       {Node}      (Optional) and not named, a parameter passed to this method will be taken as
- *                          the item itself we are seeking the z-index for and will not include itsef when
- *                          calculating the maximum index (not doing this will increment the z-index of the item
- *                          every time this method is called on it).
+ * @param       {HTMLElement}  el   (Optional) A parameter passed to this method will be taken as
+ *                                  the item itself we are seeking the z-index for and will not
+ *                                  include itsef when calculating the maximum index (not doing
+ *                                  this will increment the z-index of the item every time this
+ *                                  method is called on it).
  *
- * @returns     {number}    A number representing the maximum z-index on the page plus one.
+ * @returns     {Number}    A number representing the maximum z-index on the page plus one.
  */
-Wui.maxZ = function() {
-    var self      = (arguments[0] instanceof jQuery) ? arguments[0][0] : arguments[0],
+Wui.maxZ = function(el) {
+    var self      = (el instanceof jQuery) ? el[0] : el,
         bodyElems = $('body *'),
         useElems  = bodyElems.length < 2500 ? bodyElems : $('body > *, [style*="z-index"]'),
         topZ      = Math.max.apply(null, 
@@ -69,7 +90,7 @@ Wui.isPercent = function(val) {
 
 
 /**
- * Determines the width of the scrollbar for the current browser/OS 
+ * Determines the width of the scroll bar for the current browser/OS
  *
  * @returns {Number}    The width of the scrollbar
  */
@@ -91,8 +112,9 @@ Wui.getScrollbarWidth = function() {
 /**
  * Gets an object containing all the styles defined for an object from stylesheets to inline styles.
  *
- * @param   {Node}      elem    The element for which to get styles. This should NOT be a jquery object.
- * @returns {Object}    Object containing key value pairs of style rules and their values.
+ * @param   {HTMLElement}   elem    The element for which to get styles. This should NOT be a jquery object.
+ *
+ * @returns {Object}        Object containing key value pairs of style rules and their values.
  */
 Wui.getStylesForElement = function(elem) {
     var result = {};
@@ -133,9 +155,9 @@ Wui.getStylesForElement = function(elem) {
 /**
  * Gets all of the options in a select box
  *
- * @param   {Node}      target  A node, jQuery object, or selector string for a <select> node
+ * @param   {HTMLElement}   target  A node, jQuery object, or selector string for a <select> node
  *
- * @returns {Array}     An array full of objects that represent the option values in the select
+ * @returns {Array}         An array full of objects that represent the option values in the select
  */
 Wui.parseSelect = function(target) {
     var data = [],
@@ -163,11 +185,12 @@ Wui.parseSelect = function(target) {
 /**
  * Converts a percentage string to an integer pixel value based on the passed in element's parent
  *
- * @param       {Node}      el          The element that will get the percentage applied to it
- * @param       {String}    percent     A string containing a number and percent sign
- * @param       {String}    dim         Optional. 'width'|'height'. Default is 'width'.
+ * @param       {HTMLElement}   el          The element that will get the percentage applied to it
+ * @param       {String}        percent     A string containing a number and percent sign
+ * @param       {String}        dim         Optional. 'width'|'height'. Default is 'width'.
  *
- * @returns     {number}    The Math.floor pixel value of the percent of the width of 'el''s parent.
+ * @returns     {Number}        The Math.floor pixel value of the percent of the width of 'el''s parent.
+ *
  */
 Wui.percentToPixels = function(el, percent, dim){
     var parent = el.parent(),
@@ -215,16 +238,16 @@ Wui.positionItem = function(parent, child) {
  * Determines whether data is expected to be in containers separating values for the total and the
  * data, or if the data cones in in an array, there is no need to unwrap it.
  *
- * @param       {Object|Array}      r   Object or array that is the resopnse data from a request.
+ * @param       {Object|Array}  response   Object or array that is the response data from a request.
  *
- * @returns     {Object}            An object with cleanly separated data and total columns.
+ * @returns     {Object}        An object with cleanly separated data and total columns.
  */
-Wui.unwrapData = function(r){
+Wui.unwrapData = function(response) {
     var me          = this,
         dc          = me.hasOwnProperty('dataContainer') ? me.dataContainer : Wui.Data.prototype.dataContainer,
         tc          = me.hasOwnProperty('totalContainer') ? me.totalContainer : Wui.Data.prototype.totalContainer,
-        response    = (dc && r[dc]) ? r[dc] : r,
-        total       = (tc && r[tc]) ? r[tc] : response.length;
+        resp        = (dc && response[dc]) ? response[dc] : response,
+        total       = (tc && response[tc]) ? response[tc] : resp.length;
     
-    return {data:response, total:total};
+    return {data:resp, total:total};
 };

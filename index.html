@@ -7,7 +7,7 @@
         <meta name="description" content="WUI - Webteam User Interface is a *vc javascript framework for rapid app development.">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         
-        <link rel="stylesheet" href="demo.css" type="text/css" media="all">
+        <link rel="stylesheet" href="assets/demo.css" type="text/css" media="all">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     
         <style>
@@ -17,19 +17,19 @@
             }
         </style>
         
-        <!-- PRODUCTION FILES -->
-        <link rel="stylesheet" href="../dist/css/combo-2.min.css" type="text/css" media="all">
-        <script src="../dist/combo-2.min.js"></script>      
+        <!-- PRODUCTION FILES
+        <link rel="stylesheet" href="dist/css/combo-2.min.css" type="text/css" media="all">
+        <script src="dist/combo-2.min.js"></script> -->
 
-        <!-- SOURCE FILES
+        <!-- SOURCE FILES -->
             <link rel="stylesheet" href="../src/css/combo-2.css" type="text/css" media="all">
-            <script src="../src/libs/es5-shim.js"></script>
-            <script src="../src/libs/verge.js"></script>
-            <script src="../src/core-methods.js"></script>
-            <script src="../src/Data.js"></script>
-            <script src="../src/Smarty.js"></script>
-            <script src="../src/Combo2.js"></script>
-         -->
+            <script src="src/libs/es5-shim.js"></script>
+            <script src="src/libs/verge.js"></script>
+            <script src="src/core-methods.js"></script>
+            <script src="src/Data.js"></script>
+            <script src="src/Smarty.js"></script>
+            <script src="src/Combo2.js"></script>
+        
     </head>
     <body class="language-js">
         <div class="content">
@@ -244,7 +244,7 @@ local_with_target = new Wui.Combo2({
     width:      300,
     valueItem:  'tx_id',
     titleItem:  'description',
-    url:        'data.json',
+    url:        'demo/data.json',
     template:   '&lt;li>{|function:"amountView":"amount"} &lt;span class="dd-span dd-date">{date}&lt;/span> {description}&lt;/li>',
     templateFn: {
         amountView: function(amount) {
@@ -317,7 +317,7 @@ local_with_target = new Wui.Combo2({
                 width:      300,
                 valueItem:  'tx_id',
                 titleItem:  'description',
-                url:        'data.json',
+                url:        'demo/data.json',
                 template:   '<li>{|function:"amountView":"amount"} <span class="dd-span dd-date">{date}</span> {description}</li>',
                 templateFn: {
                     amountView: function(amount) {

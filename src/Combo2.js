@@ -1,7 +1,7 @@
 /**
- * Combo2 - A WUI-based control
+ * Combo2 - Combination of a select element and an autocomplete
  * =================================================================================================
- * (a combination of a select and an autocomplete)
+ * (A Wui based control)
  *
  * Examples
  * --------
@@ -125,36 +125,57 @@
  *           list. This message can be changed with the `noResultsMessage` attribute.
  *
  * @class Wui.Combo2
- * 
- * @param       {Object}    args    A configuration object containing overrides for the default configs
- *                                  below as well as methods in the prototype.
  *
- * @param       {Node}      target  Optional. A target can be a DOM node, a jQuery Object, or a selector
+ * @author  Stephen Nielsen (rolfe.nielsen@gmail.com)
+ * 
+ * @param   {Object}    args    A configuration object containing overrides for the default configs
+ *                              below as well as methods in the prototype.
+ *
+ * @param   {Boolean}   args.autoLoad[false]    Whether to load remote data on instantiation of the
+ *                                              Combo (true), or to load remote data based on a
+ *                                              user's search. Default: false.
+ *
+ * @param   {Node}      target  Optional. A target can be a DOM node, a jQuery Object, or a selector
  *                                  string that returns one item that is expected to reference a select
  *                                  box that will have its data pulled into the Combo's data array.
  *
- * @returns     {Object}    The Wui.Combo2 object is returned.
+ * @returns {Object}    The Wui.Combo2 object is returned.
  */
 Wui.Combo2 = function(args, target) {    
-    $.extend(this, {        
-        // Whether to load remote data on instantiation of the Combo (true), or to load 
-        // remote data based on a user's search. Default: false.
+    $.extend(this, {
         autoLoad: false,
-        
-        // A CSS class that will be applied to the options list (or dropdown). This class can be
-        // useful for setting a max/min height or width, or for special styling.
+
+        /**
+         * @property    {String}    A space separated string containing names of CSS class(es) that
+         *                          will be applied to the options list (or dropdown). This class
+         *                          can be useful for setting a max/min height or width, or for
+         *                          special styling. Default: ''.
+         * @memberof    Wui.Combo2
+         */
         ddCls: '',
-        
-        // Attributes to set on the object - good for setting 'data-' items
+
+        /**
+         * @property    {Object}    Attributes to set on the object - good for setting 'data-' items
+         *                          Default: {}.
+         * @memberof    Wui.Combo2
+         */
         attr: {},
 
-        // The message to display when a search yields no results, whether local or remote. May be
-        // a plain text string, or HTML formatted.
+        /**
+         * @property    {String}    The message to display when a search yields no results, whether
+         *                          local or remote. May be  a plain text string, or HTML formatted.
+         *                          Default: 'No Results'.
+         * @memberof    Wui.Combo2
+         */
         noResultsMessage: 'No Results.',
-        
-        // The text field for the combo. This field is specified in the constructor of the Combo (as
-        // opposed to the prototype) because it must be a new DOM node for every instance of
-        // the Combo.
+
+        /**
+         * @property    {HTMLElement}   A jQuery wrapper of the text field for the combo. This field
+         *                              is specified in the constructor of the Combo (as opposed to
+         *                              the prototype) because it must be a new DOM node for every
+         *                              instance of the Combo.
+         * @memberof    Wui.Combo2
+         */
         field: $('<input>').attr({
             type:               'text',
             autocomplete:       'off',
@@ -164,7 +185,7 @@ Wui.Combo2 = function(args, target) {
         }).addClass('wui-combo-search'),
         
         /** 
-         * @property {Boolean} forceSelect The user MUST select an item from the option list when true.
+         * @property    {Boolean}   forceSelect     The user MUST select an item from the option list when true.
          * @memberof Wui.Combo2
          */
         forceSelect: false,
@@ -529,7 +550,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
-     * Creates the button for toggling the options list based on the value of the Combo's `showDD` property
+     * Creates the button for toggling the options list based on the value of the Combo's 'showDD' property
      */
     createOptionListToggle: function() {
         var me = this,
@@ -697,9 +718,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * Returns a record containing a key value pair to be found in a record.
      *
      * @param    {String}           key     The data item to look for
-     * @param    {any}              val     The value to look for
+     * @param    {*}                val     The value to look for
      *
-     * @return {Object|undefined}   An object containing the dataList, row, and record, 
+     * @returns {Object|undefined}  An object containing the dataList, row, and record,
      *                              or undefined if there was no matching row.
      */       
     getItemBy: function(key, val) {
@@ -1971,7 +1992,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * item.
      *
      * NOTE: Because a blank string and null are both valid options in a
-     * HTMLSelectElement, calling this method with `undefined` for sv is the ONLY
+     * HTMLSelectElement, calling this method with 'undefined' for sv is the ONLY
      * way to programmatically reset the field to an "un-interacted-with" state, and
      * will only do so on a field that is not consuming a select element.
      * It is important this behavior is not changed without fully understanding

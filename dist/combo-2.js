@@ -1,3 +1,286 @@
+// Production steps of ECMA-262, Edition 5, 15.4.4.18
+// Reference: http://es5.github.io/#x15.4.4.18
+if (!Array.prototype.forEach) {
+
+  Array.prototype.forEach = function(callback, thisArg) {
+
+    var T, k;
+
+    if (this == null) {
+      throw new TypeError(' this is null or not defined');
+    }
+
+    // 1. Let O be the result of calling toObject() passing the
+    // |this| value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get() internal
+    // method of O with the argument "length".
+    // 3. Let len be toUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If isCallable(callback) is false, throw a TypeError
+    // exception. // See: http://es5.github.com/#x9.11
+    if (typeof callback !== "function") {
+      throw new TypeError(callback + ' is not a function');
+    }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let
+    // T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
+
+    // 6. Let k be 0
+    k = 0;
+
+    // 7. Repeat, while k < len
+    while (k < len) {
+
+      var kValue;
+
+      // a. Let Pk be ToString(k).
+      //    This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty
+      //    internal method of O with argument Pk.
+      //    This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+
+        // i. Let kValue be the result of calling the Get internal
+        // method of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Call the Call internal method of callback with T as
+        // the this value and argument list containing kValue, k, and O.
+        callback.call(T, kValue, k, O);
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+    // 8. return undefined
+  };
+}
+
+
+/**
+ * Shim for "fixing" IE's lack of support (IE < 9) for applying slice
+ * on host objects like NamedNodeMap, NodeList, and HTMLCollection
+ * (technically, since host objects have been implementation-dependent,
+ * at least before ES6, IE hasn't needed to work this way).
+ * Also works on strings, fixes IE < 9 to allow an explicit undefined
+ * for the 2nd argument (as in Firefox), and prevents errors when
+ * called on other DOM objects.
+ */
+(function () {
+  'use strict';
+  var _slice = Array.prototype.slice;
+
+  try {
+    // Can't be used with DOM elements in IE < 9
+    _slice.call(document.documentElement);
+  } catch (e) { // Fails in IE < 9
+    // This will work for genuine arrays, array-like objects, 
+    // NamedNodeMap (attributes, entities, notations),
+    // NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
+    // and will not fail on other DOM objects (as do DOM elements in IE < 9)
+    Array.prototype.slice = function(begin, end) {
+      // IE < 9 gets unhappy with an undefined end argument
+      end = (typeof end !== 'undefined') ? end : this.length;
+
+      // For native Array objects, we use the native slice function
+      if (Object.prototype.toString.call(this) === '[object Array]'){
+        return _slice.call(this, begin, end); 
+      }
+
+      // For array like object we handle it ourselves.
+      var i, cloned = [],
+        size, len = this.length;
+
+      // Handle negative value for "begin"
+      var start = begin || 0;
+      start = (start >= 0) ? start : Math.max(0, len + start);
+
+      // Handle negative value for "end"
+      var upTo = (typeof end == 'number') ? Math.min(end, len) : len;
+      if (end < 0) {
+        upTo = len + end;
+      }
+
+      // Actual expected size of the slice
+      size = upTo - start;
+
+      if (size > 0) {
+        cloned = new Array(size);
+        if (this.charAt) {
+          for (i = 0; i < size; i++) {
+            cloned[i] = this.charAt(start + i);
+          }
+        } else {
+          for (i = 0; i < size; i++) {
+            cloned[i] = this[start + i];
+          }
+        }
+      }
+
+      return cloned;
+    };
+  }
+}());
+
+
+// Production steps of ECMA-262, Edition 5, 15.4.4.19
+// Reference: http://es5.github.io/#x15.4.4.19
+if (!Array.prototype.map) {
+
+  Array.prototype.map = function(callback, thisArg) {
+
+    var T, A, k;
+
+    if (this == null) {
+      throw new TypeError(' this is null or not defined');
+    }
+
+    // 1. Let O be the result of calling ToObject passing the |this| 
+    //    value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get internal 
+    //    method of O with the argument "length".
+    // 3. Let len be ToUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If IsCallable(callback) is false, throw a TypeError exception.
+    // See: http://es5.github.com/#x9.11
+    if (typeof callback !== 'function') {
+      throw new TypeError(callback + ' is not a function');
+    }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
+
+    // 6. Let A be a new array created as if by the expression new Array(len) 
+    //    where Array is the standard built-in constructor with that name and 
+    //    len is the value of len.
+    A = new Array(len);
+
+    // 7. Let k be 0
+    k = 0;
+
+    // 8. Repeat, while k < len
+    while (k < len) {
+
+      var kValue, mappedValue;
+
+      // a. Let Pk be ToString(k).
+      //   This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty internal 
+      //    method of O with argument Pk.
+      //   This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+
+        // i. Let kValue be the result of calling the Get internal 
+        //    method of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Let mappedValue be the result of calling the Call internal 
+        //     method of callback with T as the this value and argument 
+        //     list containing kValue, k, and O.
+        mappedValue = callback.call(T, kValue, k, O);
+
+        // iii. Call the DefineOwnProperty internal method of A with arguments
+        // Pk, Property Descriptor
+        // { Value: mappedValue,
+        //   Writable: true,
+        //   Enumerable: true,
+        //   Configurable: true },
+        // and false.
+
+        // In browsers that support Object.defineProperty, use the following:
+        // Object.defineProperty(A, k, {
+        //   value: mappedValue,
+        //   writable: true,
+        //   enumerable: true,
+        //   configurable: true
+        // });
+
+        // For best browser support, use the following:
+        A[k] = mappedValue;
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+
+    // 9. return A
+    return A;
+  };
+}
+
+
+if (!Array.prototype.filter) {
+  Array.prototype.filter = function(fun/*, thisArg*/) {
+    'use strict';
+
+    if (this === void 0 || this === null) {
+      throw new TypeError();
+    }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== 'function') {
+      throw new TypeError();
+    }
+
+    var res = [];
+    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+    for (var i = 0; i < len; i++) {
+      if (i in t) {
+        var val = t[i];
+
+        // NOTE: Technically this should Object.defineProperty at
+        //       the next index, as push can be affected by
+        //       properties on Object.prototype and Array.prototype.
+        //       But that method's new, and collisions should be
+        //       rare, so use the more-compatible alternative.
+        if (fun.call(thisArg, val, i, t)) {
+          res.push(val);
+        }
+      }
+    }
+
+    return res;
+  };
+}
+
+
+// ES 15.2.3.6 Object.defineProperty ( O, P, Attributes )
+// Partial support for most common case - getters, setters, and values
+(function() {
+  if (!Object.defineProperty ||
+      !(function () { try { Object.defineProperty({}, 'x', {}); return true; } catch (e) { return false; } } ())) {
+    var orig = Object.defineProperty;
+    Object.defineProperty = function (o, prop, desc) {
+      // In IE8 try built-in implementation for defining properties on DOM prototypes.
+      if (orig) { try { return orig(o, prop, desc); } catch (e) {} }
+
+      if (o !== Object(o)) { throw TypeError("Object.defineProperty called on non-object"); }
+      if (Object.prototype.__defineGetter__ && ('get' in desc)) {
+        Object.prototype.__defineGetter__.call(o, prop, desc.get);
+      }
+      if (Object.prototype.__defineSetter__ && ('set' in desc)) {
+        Object.prototype.__defineSetter__.call(o, prop, desc.set);
+      }
+      if ('value' in desc) {
+        o[prop] = desc.value;
+      }
+      return o;
+    };
+  }
+}());
+
 /*!
  * verge 1.9.1+201402130803
  * https://github.com/ryanve/verge
@@ -13,13 +296,32 @@
  * @license MIT 2016 Stephen Rolfe Nielsen
  */ 
 
-// Make sure the WUI is defined.
+/**
+ * WUI Core Methods
+ * =================================================================================================
+ * A collection of useful helper methods that are used throughout the WUI.
+ *
+ * @namespace Wui
+ *
+ * @author  Stephen Nielsen (rolfe.nielsen@gmail.com)
+ */
 /* jshint ignore:start */
-var Wui = Wui || {};
+// Make sure the WUI is defined.
+window.Wui = function() {
+    return Wui || {};
+};
 /* jshint ignore:end */
 
+
 /**
- * Returns a string that will be a unique to use on the DOM. Output in the format 'prefix-n'.
+ * Returns a string that will be a unique id to use on the DOM. Output in the format 'prefix-n'.
+ *
+ * Wui.id();
+ * // returns wui-0;
+ *
+ * Wui.id('ts');
+ * // returns ts-1;
+ *
  *
  * @param       {String}    prefix      Optional. A string to use before the number. Default is 'wui'.
  *
@@ -31,31 +333,33 @@ Wui.id = function(prefix) {
     return prefix +'-'+ (Wui.idCounter = ~~++Wui.idCounter);
 };
 
+
 /**
  * Shorthand for typing typeof comparisons everywhere.
  *
- * @param       {Object}    v   Only an object in the sense that everything in JS is an object. It
- *                              can be any variable you want to check whether it is defined.
+ * @param       {Object}    key     Only an object in the sense that everything in JS is an object. It
+ *                                  can be any variable you want to check whether it is defined.
  *
  * @returns     {Boolean}   True if the item is not undefined.
  */
-Wui.isset = function(v) {
-    return (typeof v !== 'undefined');
+Wui.isset = function(key) {
+    return (typeof key !== 'undefined');
 };
 
 
 /**
  * Gets the maximum CSS z-index on the page and returns one higher, or one if no z-indexes are defined.
  *
- * @param       {Node}      (Optional) and not named, a parameter passed to this method will be taken as
- *                          the item itself we are seeking the z-index for and will not include itsef when
- *                          calculating the maximum index (not doing this will increment the z-index of the item
- *                          every time this method is called on it).
+ * @param       {HTMLElement}  el   (Optional) A parameter passed to this method will be taken as
+ *                                  the item itself we are seeking the z-index for and will not
+ *                                  include itsef when calculating the maximum index (not doing
+ *                                  this will increment the z-index of the item every time this
+ *                                  method is called on it).
  *
- * @returns     {number}    A number representing the maximum z-index on the page plus one.
+ * @returns     {Number}    A number representing the maximum z-index on the page plus one.
  */
-Wui.maxZ = function() {
-    var self      = (arguments[0] instanceof jQuery) ? arguments[0][0] : arguments[0],
+Wui.maxZ = function(el) {
+    var self      = (el instanceof jQuery) ? el[0] : el,
         bodyElems = $('body *'),
         useElems  = bodyElems.length < 2500 ? bodyElems : $('body > *, [style*="z-index"]'),
         topZ      = Math.max.apply(null, 
@@ -84,7 +388,7 @@ Wui.isPercent = function(val) {
 
 
 /**
- * Determines the width of the scrollbar for the current browser/OS 
+ * Determines the width of the scroll bar for the current browser/OS
  *
  * @returns {Number}    The width of the scrollbar
  */
@@ -106,8 +410,9 @@ Wui.getScrollbarWidth = function() {
 /**
  * Gets an object containing all the styles defined for an object from stylesheets to inline styles.
  *
- * @param   {Node}      elem    The element for which to get styles. This should NOT be a jquery object.
- * @returns {Object}    Object containing key value pairs of style rules and their values.
+ * @param   {HTMLElement}   elem    The element for which to get styles. This should NOT be a jquery object.
+ *
+ * @returns {Object}        Object containing key value pairs of style rules and their values.
  */
 Wui.getStylesForElement = function(elem) {
     var result = {};
@@ -148,9 +453,9 @@ Wui.getStylesForElement = function(elem) {
 /**
  * Gets all of the options in a select box
  *
- * @param   {Node}      target  A node, jQuery object, or selector string for a <select> node
+ * @param   {HTMLElement}   target  A node, jQuery object, or selector string for a <select> node
  *
- * @returns {Array}     An array full of objects that represent the option values in the select
+ * @returns {Array}         An array full of objects that represent the option values in the select
  */
 Wui.parseSelect = function(target) {
     var data = [],
@@ -178,11 +483,12 @@ Wui.parseSelect = function(target) {
 /**
  * Converts a percentage string to an integer pixel value based on the passed in element's parent
  *
- * @param       {Node}      el          The element that will get the percentage applied to it
- * @param       {String}    percent     A string containing a number and percent sign
- * @param       {String}    dim         Optional. 'width'|'height'. Default is 'width'.
+ * @param       {HTMLElement}   el          The element that will get the percentage applied to it
+ * @param       {String}        percent     A string containing a number and percent sign
+ * @param       {String}        dim         Optional. 'width'|'height'. Default is 'width'.
  *
- * @returns     {number}    The Math.floor pixel value of the percent of the width of 'el''s parent.
+ * @returns     {Number}        The Math.floor pixel value of the percent of the width of 'el''s parent.
+ *
  */
 Wui.percentToPixels = function(el, percent, dim){
     var parent = el.parent(),
@@ -230,263 +536,364 @@ Wui.positionItem = function(parent, child) {
  * Determines whether data is expected to be in containers separating values for the total and the
  * data, or if the data cones in in an array, there is no need to unwrap it.
  *
- * @param       {Object|Array}      r   Object or array that is the resopnse data from a request.
+ * @param       {Object|Array}  response   Object or array that is the response data from a request.
  *
- * @returns     {Object}            An object with cleanly separated data and total columns.
+ * @returns     {Object}        An object with cleanly separated data and total columns.
  */
-Wui.unwrapData = function(r){
+Wui.unwrapData = function(response) {
     var me          = this,
         dc          = me.hasOwnProperty('dataContainer') ? me.dataContainer : Wui.Data.prototype.dataContainer,
         tc          = me.hasOwnProperty('totalContainer') ? me.totalContainer : Wui.Data.prototype.totalContainer,
-        response    = (dc && r[dc]) ? r[dc] : r,
-        total       = (tc && r[tc]) ? r[tc] : response.length;
+        resp        = (dc && response[dc]) ? response[dc] : response,
+        total       = (tc && response[tc]) ? response[tc] : resp.length;
     
-    return {data:response, total:total};
+    return {data:resp, total:total};
 };
 
 /**
- @event        datachanged    When the data changes (name, data object)
- @author    Stephen Nielsen (rolfe.nielsen@gmail.com)
-
-The WUI Data Object is for handling data whether remote or local. It will fire 
-namespacedevents that can be used by an application, and provides a uniform 
-framework for working with data.
-
-If data is remote, Wui.Data is an additional wrapper around the jQuery AJAX method 
-and provides for pre-processing data. Data can be pushed and spliced into/out of 
-the object and events will be fired accordingly.
-*/
-Wui.Data = function(args){
-    $.extend(this,{
-        /** Array of data that will be stored in the object. Can be specified for the object or loaded remotely */
-        data:           [],
-        
-        /** Name a key in the data that represents the identity field. */
-        identity:       null,
-        
-        /** Name of the data object. Allows the object to be identified in the listeners, and namespaces events. */
-        name:           null,
-        
-        /** Object containing keys that will be passed remotely */
-        params:         {},
-        
-        /** URL of the remote resource from which to obtain data. A null URL will assume a local data definition. */
-        url:            null,
-        
-        /** Special configuration of the ajax method. Defaults are:
-        
-            data:       me.params,
-            dataType:   'json',
-            success:    function(r){ me.success.call(me,r); },
-            error:      function(e){ me.failure.call(me,e); },
-        */
-        ajaxConfig:     {},
-        
-        /** The total number of records contained in the data object */
-        total:          0
-    },args);
+ * WUI Data
+ * =================================================================================================
+ * The WUI Data Object is for handling data whether remote or local. It will fire namespaced events
+ * that can be used by an application, and provides a uniform framework for working with data.
+ * 
+ * If data is remote, Wui.Data is an additional wrapper around the jQuery AJAX method and provides
+ * for pre-processing data. Data can be pushed and spliced into/out of the object and events will be
+ * fired accordingly.
+ *
+ * @class Wui.Data
+ *
+ * @author  Stephen Nielsen (rolfe.nielsen@gmail.com)
+ *
+ * @fires   Wui.Data#datachanged
+ *
+ * @param   {Object}    configs             An object for setting up how Wui.Data will behave
+ * @param   {Array}     [configs.data]      Array of data that will be stored in the object. Can be
+ *                                          specified for the object or loaded remotely.
+ * @param   {string}    [configs.name]      Name of the data object. Allows the object to be
+ *                                          identified in the listeners, and namespaces events.
+ * @param   {object}    [configs.params]    Object containing keys that will be passed remotely each time.
+ * @param   {string}    [configs.url]       URL of the remote resource from which to obtain data.
+ *                                          A null URL will assume a local data definition.
+ * @param   {object}    [configs.ajaxConfig] Special configuration of the ajax method. Defaults are:
+ *
+ *                                          {
+ *                                              data:       me.params,
+ *                                              dataType:   'json',
+ *                                              success:    function(r){ me.success.call(me,r); },
+ *                                              error:      function(e){ me.failure.call(me,e); }
+ *                                          }
+ *
+ * @param   {number}    [configs.total=0]   The total number of records contained in the data object.
+ *                                          This will be calculated if not provided.
+ */
+Wui.Data = function(configs) {
+    $.extend(this, {
+        ajaxConfig: {},
+        data: [],
+        name:  null,
+        params: {},
+        total: 0,
+        url:  null
+    }, configs);
 };
+
 Wui.Data.prototype = {
-    /** An object in the remote response actually containing the data.
-    Best set modifying the prototype eg. Wui.Data.prototype.dataContainer = 'payload'; */
+    /**
+     * Fires after data is set. Meant to be overridden. See loadData().
+     *
+     * @param   {Array}     data    The value of the data config of the current object
+     */
+    afterSet: function() {},
+
+
+    /**
+     * Event hook that will allow for the setting of the params config before loadData
+     * performs a remote call. Meant to be overridden. See loadData(). If this function returns
+     * false, load data will not make a remote call.
+     */
+    beforeLoad: function() {},
+
+
+    /**
+     * Fires after the remote call but before data is set on the object. Meant to be
+     * overridden. See loadData().
+     * @param   {Array}     data    Data to be set on the object
+     */
+    beforeSet: function() {},
+
+
+    /**
+     * Used for when data is changed. Meant to be overridden. See loadData(). Functional equivalent
+     * to the custom jQuery event that is fired with the same name ('datachanged').
+     *
+     * @param   {Array}     newData    Array of the new data
+     */
+    dataChanged: function() {},
+
+
+    /**
+     * An object in the remote response actually containing the data.
+     * Best set modifying the prototype eg. Wui.Data.prototype.dataContainer = 'payload';
+     */
     dataContainer:  null,
-    /** An object in the remote response specifying the total number of records. Setting this
-    feature will overrride the Data object's counting the data. Best set modifying the prototype eg. Wui.Data.prototype.totalContainer = 'total'; */
-    totalContainer: null,
-    
-    /** 
-    @param {array}    newData    Array of the new data
-    @eventhook Used for when data is changed.
-    */
-    dataChanged:    function(){},
-    
-    /**
-    @param {function} fn A function that gets called for each item in the object's data array
-    
-    @return true
-    The passed in function gets called with two parameters the item, and the item's index.
-    */
-    dataEach:       function(f){
-                        for(var i = 0; i < this.data.length; i++)
-                            if(f(this.data[i],i) === false)
-                                break;
-                        return true;
-                    },
-    
-    /**
-    Performs a remote call and aborts previous requests
-    Between loadData(), success() and setData() fires several event hooks in this order:
-    
-    1. setParams()
-    2. beforeLoad()
-    3. onSuccess()
-    4. beforeSet()
-    5. processData()
-    6. dataChanged()
-    -  'datachanged' event is fired
-    7. afterSet()
-    
-    Upon failure will fire onFailure()
-    */
-    loadData:       function(){
-                        var me = this,
-                            config = $.extend({
-                                data:       me.params,
-                                dataType:   'json',
-                                success:    function(){ me.success.apply(me,arguments); },
-                                error:      function(){ me.failure.apply(me,arguments); },
-                            },me.ajaxConfig);
-                        
-                        // Work in additional parameters that will change or stop the request
-                        var paramsOkay = me.setParams.apply(me,arguments),
-                            beforeLoad = me.beforeLoad.apply(me,arguments);
 
-                        // Perform request
-                        if(paramsOkay !== false && beforeLoad !== false){
-                            // abort the last request in case it takes longer to come back than the one we're going to call
-                            if(me.lastRequest && me.lastRequest.readyState != 4) {
-                                me.lastRequest.abort();
-                            }
-                            
-                            me.lastRequest = $.ajax(me.url,config);
-                            
-                            return me.lastRequest;
-                        }
-                        
-                        // If there was no request made, return a rejected deferred to keep return types consistent
-                        return $.Deferred().reject();
-                    },
-    /**
-    @param {object} params    Params to be set
-    @eventhook Can be used as is or overridden to run when parameters change.
-    Can be used as is to set parameters before an AJAX load, or it can also be used as an event hook and overridden.
-    This method is called from loadData with its arguments passed on, so arguments passed to load data will be sent here. 
-    See loadData(). If this function returns false, load data will not make a remote call.
-    */
-    setParams:      function(params){
-                        if(params && typeof params === 'object')
-                            $.extend(this.params,params);
-                    },
-    
-    /**
-    @param {array} d Data to be set on the ojbect
-    @param {number} [t] Total number of records in the data set. If not specified setData will count the data set.
-    
-    Can be called to set data locally or called by loadData(). Fires a number of events and event hooks. See loadData().
-    */
-    setData:        function(d,t){
-                        var me = this;
-                        
-                        // Event hook for before the data is set
-                        me.beforeSet(d);
-                        
-                        // Set the data
-                        me.data = me.processData(d);
-                        me.total = ($.isNumeric(t)) ? t : (me.data) ? me.data.length : 0;
-                        
-                        me.fireDataChanged();
-                    },
-
-    fireDataChanged:function(){
-                        var me = this, dn = (me.name || 'w121-data');
-
-                        me.dataChanged(me.data);
-                        $(document).trigger($.Event('datachanged.' + dn),[dn, me])
-                            .trigger($.Event('datachanged'),[dn, me]);
-                        me.afterSet(me.data);
-                    },
-    
-    /** @eventhook Event hook that will allow for the setting of the params config before loadData performs a remote call. Meant to be overridden. See loadData().
-        If this function returns false, load data will not make a remote call. */
-    beforeLoad:     function(){},
-    
-    /**
-    @param    {array}    data    The value of the data cofig of the current object
-    @eventhook  Fires after data is set. Meant to be overridden. See loadData().
-    */
-    afterSet:       function(){},
-    
-    /**
-    @param {array} d Data to be set on the ojbect
-    @eventhook  Fires after the remote call but before data is set on the object. Meant to be overridden. See loadData().
-    */
-    beforeSet:      function(){},
-    
-    /**
-    @param {object or array} r Response from the server in JSON format
-    Runs when loadData() successfully completes a remote call.
-    Gets data straight or gets it out of the dataContainer and totalContainer.
-
-    Calls setData() passing the response and total.
-    */
-    success:        function(r){
-                        var me = this,
-                            unwrapped = Wui.unwrapData.call(me,r);
-                        
-                        me.onSuccess(r);
-                        me.setData(unwrapped.data, unwrapped.total);
-                    },
-    
-    /** @eventhook AllowS for the setting of the params config before loadData performs a remote call. Meant to be overridden. See loadData(). */
-    onSuccess:      function(){},
-    
-    /** @eventhook Allows for the setting of the params config before loadData performs a remote call. Meant to be overridden. See loadData(). */
-    onFailure:      function(){},
-    
-    /** Runs when loadData() fails. */
-    failure:        function(e){ this.onFailure(e); },
-    
-    /** 
-    @param {array} Data to be processed.
-    Allows for pre-processing of the data before it is taken into the data object. Meant to be overridden, otherwise will act as a pass-through. See loadData().*/
-    processData:    function(response){ return response; },
 
     /**
-    @param {object} [obj,...] One or more objects to be added to the end of the parent object's items array
-    @return The new length of the array 
-    Same as Array.push() but acting on the data array of the object.
-    */
-    push:           function(){
-                        var retVal = Array.prototype.push.apply(this.data || (this.data = []), arguments);
-                        this.total = this.data.length;
-                        this.fireDataChanged();
-                        return retVal;
-                    },
+     * The passed in function gets called with two parameters the item, and the item's index.
+     * 
+     * @param   {Function}  fn      A function that gets called for each item in the object's data array
+     * 
+     * @returns {Boolean}   Returns true.
+     */
+    dataEach: function(fn) {
+        for(var i = 0; i < this.data.length; i++) {
+            if(fn(this.data[i],i) === false) {
+                break;
+            }
+        }
+        
+        return true;
+    },
+
 
     /**
-    @param  {number}    idx         Position to start making changes in the items array.
-    @param  {number}    howMany     Number of elements to remove.
-    @param  {object}    [obj,...]   One or more objects to be added to the array at position idx
-    @return An array of the removed objects, or an empty array. 
-    Same as Array.splice() but acting on the data array of the object.
+     * Runs when loadData() fails.
+     */
+    failure: function(e) {
+        this.onFailure(e);
+    },
+
+
+    /**
+     * First calls the dataChanged event hook function, then fires the 'datachanged' custom event,
+     * then calls the afterSet() event hook.
+     */
+    fireDataChanged: function() {
+        var me = this, dn = (me.name || 'w121-data');
+
+        me.dataChanged(me.data);
+
+        /**
+         * Data Changed Event
+         *
+         * @event   Wui.Data#datachanged
+         *
+         * @type        {object}
+         *
+         * @property    {object}    event   The jQuery event wrapper and details.
+         * @property    {string}    dn      The name property from the object config uniquely
+         *                                  identifying this object.
+         * @property    {Wui.Data}  obj     This data object that will contain all updated properties.
+         */
+        $(document)
+            .trigger($.Event('datachanged.' + dn),[dn, me])
+            .trigger($.Event('datachanged'),[dn, me]);
+
+        me.afterSet(me.data);
+    },
+
+
+    /**
+     * Performs a remote call and aborts previous requests from this data object.
+     * Between loadData(), success() and setData() fires several event hooks in this order:
+     * 
+     * 1. setParams()
+     * 2. beforeLoad()
+     * 3. onSuccess()
+     * 4. beforeSet()
+     * 5. processData()
+     * 6. dataChanged()
+     * -  'datachanged' event is fired
+     * 7. afterSet()
+     * 
+     * Upon failure will fire onFailure()
+     */
+    loadData: function() {
+        var me = this,
+            config = $.extend({
+                data:       me.params,
+                dataType:   'json',
+                success:    function(){ me.success.apply(me,arguments); },
+                error:      function(){ me.failure.apply(me,arguments); },
+            },me.ajaxConfig);
+        
+        // Work in additional parameters that will change or stop the request
+        var paramsOkay = me.setParams.apply(me,arguments),
+            beforeLoad = me.beforeLoad.apply(me,arguments);
+
+        // Perform request
+        if(paramsOkay !== false && beforeLoad !== false){
+            // abort the last request in case it takes longer to come back than the one we're going to call
+            if(me.lastRequest && me.lastRequest.readyState != 4) {
+                me.lastRequest.abort();
+            }
+            
+            me.lastRequest = $.ajax(me.url,config);
+            
+            return me.lastRequest;
+        }
+        
+        // If there was no request made, return a rejected deferred to keep return types consistent
+        return $.Deferred().reject();
+    },
+
+
+    /**
+     * Allows for the setting of the params config before loadData performs a remote
+     * call. Meant to be overridden. See loadData().
+     */
+    onFailure: function() {},
+
+
+    /**
+     * Allows for the setting of the params config before loadData performs a remote
+     * call. Meant to be overridden. See loadData().
+     *
+     * @param    {Object|Array}  response    Response from the server in JSON format
+     */
+    onSuccess: function() {},
+
+
+    /**
+     * Allows for pre-processing of the data before it is taken into the data object. Meant to be
+     * overridden, otherwise will act as a pass-through. See loadData().
+     *
+     * @param   {Array}     response    Data to be processed.
+     *
+     * @returns {Array}     Unless overridden in an instance to modify the data, the default just
+     *                      returns whatever is passed in.
+     */
+    processData: function(response) {
+        return response;
+    },
+
+
+    /**
+     * Same as Array.push() but acting on the data array of the object.
+     *
+     * @param   {Object}    [obj__]     One or more objects to be added to the end of the parent
+     *                                  object's items array
+     *
+     * @returns {Number}    The new length of the array
+     */
+    push: function() {
+        var retVal = Array.prototype.push.apply(this.data || (this.data = []), arguments);
+
+        this.total = this.data.length;
+        this.fireDataChanged();
+
+        return retVal;
+    },
+
+
+    /**
+     * Can be used as is to set parameters before an AJAX load, or it can also be used as an event 
+     * hook and overridden. This method is called from loadData with its arguments passed on, so 
+     * arguments passed to load data will be sent here. See loadData(). If this function returns 
+     * false, load data will not make a remote call.
+     * 
+     * @param   {Object}    params      Params to be set
+     */
+    setParams: function(params) {
+        if(params && typeof params === 'object') {
+            $.extend(this.params, params);
+        }
+    },
+
+
+    /**
+     * Can be called to set data locally or called by loadData(). Fires a number of events and 
+     * event hooks. See loadData().
+     *
+     * @param   {Array}     d   Data to be set on the ojbect
+     * @param   {Number}    [t] Total number of records in the data set. If not specified setData 
+     *                          will count the data set.
+     */
+    setData: function(d, t) {
+        var me = this;
+        
+        // Event hook for before the data is set
+        me.beforeSet(d);
+        
+        // Set the data
+        me.data = me.processData(d);
+        me.total = ($.isNumeric(t)) ? t : (me.data) ? me.data.length : 0;
+        
+        me.fireDataChanged();
+    },
+
+
+    /**
+     * Same as Array.splice() but acting on the data array of the object.
+     *
+     * @param   {Number}    idx         Position to start making changes in the items array.
+     * @param   {Number}    howMany     Number of elements to remove.
+     * @param   {Object}    [obj__]     One or more objects to be added to the array at position idx
+     *
+     * @returns {Array}     An array of the removed objects, or an empty array.
+     */
+    splice: function() {
+        var retVal = Array.prototype.splice.apply(this.data || (this.data = []), arguments);
+
+        this.total = this.data.length;
+        this.fireDataChanged();
+
+        return retVal;
+    },
+
+
+    /**
+    * Runs when loadData() successfully completes a remote call.
+    * Gets data straight or gets it out of the dataContainer and totalContainer.
+    *
+    * Calls setData() passing the response and total.
+    *
+    * @param    {Object|Array}  response    Response from the server in JSON format
     */
-    splice:         function(){
-                        var retVal = Array.prototype.splice.apply(this.data || (this.data = []), arguments);
-                        this.total = this.data.length;
-                        this.fireDataChanged();
-                        return retVal;
-                    }
+    success: function(response) {
+        var me = this,
+            unwrapped = Wui.unwrapData.call(me, response);
+        
+        me.onSuccess(response);
+        me.setData(unwrapped.data, unwrapped.total);
+    },
+
+
+    /**
+     * An object in the remote response specifying the total number of records. Setting this
+     * feature will override the Data object's counting the data. Best set modifying the
+     * prototype eg. Wui.Data.prototype.totalContainer = 'total';
+     */
+    totalContainer: null
 };
 
 /**
- * Wui.Smarty is a way to create DOM elements based on data. Wui.Smarty should be considered a replacement to Wui.Template
- * in that it addresses Wui.Template's vulnerabilities, namely:
- *      - The risk of XSS attack through use of inline functions
- *      - Inability to escape HTML and Javascript values
- *      - Inability to access nested variables in a fail-safe manner
- *      - Inability to "compile" the template - a 2X speed improvement in Wui.Smarty
+ * WUI Smarty
+ * =================================================================================================
+ * (A bare-bones implementation of basic smarty syntax in javascript)
  *
- * Wui.Smarty syntactically follows the familiar usage of placing variables in the template surrounded by braces (or curly
- * brackets). Data is set as a parameter to the make() method, and make() always returns a string. Functions are available
- * via a 'function' flag that will be described below. Additionaly, it borrows many features and syntax from the PHP
- * server-side templating system Smarty.
+ * Why
+ * ---
+ * Wui.Smarty is a way to create DOM elements based on data. Wui.Smarty should be considered a
+ * replacement to Wui.Template in that it addresses Wui.Template's vulnerabilities, namely:
+ * - The risk of XSS attack through use of inline functions
+ * - Inability to escape HTML and Javascript values
+ * - Inability to access nested variables in a fail-safe manner
+ * - Inability to "compile" the template - a 2X speed improvement in Wui.Smarty
  *
- *      (http://www.smarty.net/)
+ * Syntax
+ * ------
+ * Wui.Smarty syntactically follows the familiar usage of placing variables in the template
+ * surrounded by braces (or curly brackets). Data is set as a parameter to the make() method, and
+ * make() always returns a string. Functions are available via a 'function' flag that will be
+ * described below. Additionaly, it borrows many features and syntax from the PHP server-side
+ * templating system Smarty [http://www.smarty.net/](http://www.smarty.net/).
  *
- * Wui.Smarty will "compile" its template on the first run, meaning rather than parsing the template string with a regex on
- * every iteration, it will dynamically create a function on the first iteration that will then be called with the new data
- * of each subsequent iteration. This creates approximately a 2X speed advantage (tested on a 10,000 X 4 data set), even
- * with the more functionality in the template.
+ * Wui.Smarty will "compile" its template on the first run, meaning rather than parsing the template
+ * string with a regex on every iteration, it will dynamically create a function on the first
+ * iteration that will then be called with the new data of each subsequent iteration. This creates
+ * approximately a 2X speed advantage (tested on a 10,000 X 4 data set), even with the more
+ * functionality in the template.
  *
  * Template syntax can be understood through the follow examples, starting with the most simple:
  *
@@ -496,8 +903,8 @@ Wui.Data.prototype = {
  *
  *      '<p>{name.last}, {name.first}</p>'
  *
- * As usual, values which don't exist will be returned as empty strings, however values that are set with a javascript
- * 'undefined' object will return 'undefined'.
+ * As usual, values which don't exist will be returned as empty strings, however values that are
+ * set with a javascript 'undefined' object will return 'undefined'.
  *
  * Another example shows the smarty syntax now, with the addition of flags:
  *
@@ -507,9 +914,10 @@ Wui.Data.prototype = {
  *
  *      '<p>{name.last|upper|escape:html}, {name.first|capitalize|escape:html}</p>'
  *
- * Using functions to process parameters is possible, and is done in a strict manner that closes a potential
- * attack vector. Rather than effectively eval'ing code that is passed into the template, processing functions are
- * member methods of the template, and called with fixed parameters as in the following example:
+ * Using functions to process parameters is possible, and is done in a strict manner that closes a
+ * potential attack vector. Rather than effectively eval'ing code that is passed into the template,
+ * processing functions are member methods of the template, and called with fixed parameters as
+ * in the following example:
  *
  * Given the following template definition and data:
  *
@@ -535,7 +943,8 @@ Wui.Data.prototype = {
  *      });
  *
  *      data.forEach(function(itm){
- *          $(template.make(itm)).appendTo('body');
+ *          $(template.make(itm))
+ *              .appendTo('body');
  *      });
  *
  * Will output the following:
@@ -546,48 +955,62 @@ Wui.Data.prototype = {
  *      <p>Boy, 2</p>
  *      <p>Super-Fly, Six Months</p>
  *
- * Notice in this example, values processed by the function are parameters to the function flag, not named in the place
- * for variable names. This pattern allows for safer functions, defined with comments, and allows for more complex
- * operations including the use of closures. Globally defined methods can be referenced either directly or within
- * methods on the template config.
+ * Notice in this example, values processed by the function are parameters to the function flag, not
+ * named in the place for variable names. This pattern allows for safer functions, defined with
+ * comments, and allows for more complex operations including the use of closures. Globally defined
+ * methods can be referenced either directly or within methods on the template config.
  *
  * Avaialble modifiers/flags are:
+ * ------------------------------
+ * - capitalize: Will capitalize the first letter of every word in the string
+ * - default: Accepts a parameter to use as a default value if variable is a blank string.
+ *   Example: {undefinedVar|default:"Default Text"}
+ * - escape: Used to encode special characters. Accepts 'html', 'javascript', 'json' and 'url'
+ * - function: Will call a function within the scope of the template. Parameters are the function
+ *   name, and then arguments to pass.
+ *    - Example {|function:funcName:param1Name:param2Name:...} When functions are used, the function
+ *      flag MUST be the first one, and the the key value MUST be blank since the keys are
+ *      parameters to the function.
+ * - lower: Equivalent to toLowerCase()
+ * - unescape: Used to decode, countering the effect of the escape modifier (Accepts 'html',
+ *   'javascript', 'json' and 'url')
+ * - upper: Equivalent to toUpperCase()
  *
- *      capitalize  Will capitalize the first letter of every word in the string
+ * @class Wui.Smarty
  *
- *      default     Accepts a parameter to use as a default value if variable is a blank string. Example: {undefinedVar|default:"Default Text"}
+ * @author  Stephen Nielsen (rolfe.nielsen@gmail.com)
  *
- *      escape      Used to encode special characters. Accepts 'html', 'javascript', 'json' and 'url'
+ * @param   {Object}        configs         A configuration object which at a minimum contains the html
+ *                                          template and may additionally have function definitions
+ *                                          called from the template.
  *
- *      function    Will call a function within the scope of the template. Parameters are the function name, and then arguments to pass.
- *                  Example {|function:funcName:param1Name:param2Name:...} When functions are used, the function flag MUST be the first one,
- *                  and the the key value MUST be blank since the keys are parameters to the function.
+ * @param   {string}        configs.html    The template string that will be used.
  *
- *      lower       Equivalent to toLowerCase()
+ * @param   {function}      [configs.fn__] Zero or more functions that can be called from the
+ *                                          `{|function:function_name...}` items within the template
+ *                                          string.
  *
- *      unescape    Used to decode, countering the effect of the escape modifier (Accepts 'html', 'javascript', 'json' and 'url')
- *
- *      upper       Equivalent to toUpperCase()
- *
+ * @returns {Object}    The Wui.Smarty object is returned.
  */
-Wui.Smarty = function(args) {
+Wui.Smarty = function(configs) {
     $.extend(this, {
-        html:       '',
+        html:       ''
+    }, configs, {
         compiled:   null,
         build:      [],
         __s:        ""
-    }, args);
+    });
 };
 
 
 Wui.Smarty.prototype = {
-    /*
+    /**
      * Given an array of flags, applies them on the value passed in
      *
      * @param   {string}    str     A string that will have the flags applied
      * @param   {array}     flags   An array of flags that will be parsed and functions applied
      *
-     * @return  {string}    The string passed in as 'str' with the flag functions applied
+     * @returns {string}    The string passed in as 'str' with the flag functions applied
      */
     applyFlags: function(str, flags){
         var me = this;
@@ -629,7 +1052,7 @@ Wui.Smarty.prototype = {
                 if (flag == 'default') {
                     flag = 'defaultVal';
                 }
-                
+
                 if (typeof me[flag] !== 'function') {
                     new Error('wui-smarty.js - Unsupported flag: \'' + flag + '\'.');
                 }
@@ -650,11 +1073,12 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Capitalizes the first letter of every word in the string
      *
      * @param   {string}    str     A string to be capitalized. ie: "foo bar baz"
-     * @return  {string}    Capitalized string. ie: "Foo Bar Baz"
+     *
+     * @returns {string}    Capitalized string. ie: "Foo Bar Baz"
      */
     capitalize: function(str) {
         return String(str).replace(/\w\S*/g, function(txt) {
@@ -663,12 +1087,13 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
-     * Allows a named function to be chainable through using the common me.__s
+    /**
+     * Allows a named function to be chain-able through using the common me.__s
      *
      * @param   {string}    fn     The name of a function to call within the context of this object
      * @param   {array}     params Array of parameters to be passed into function
-     * @return  {object}    A reference to the template object so that chaning can occur
+     *
+     * @returns {object}    A reference to the template object so that chaning can occur
      */
     chain: function(fn, params) {
         var me = this;
@@ -680,11 +1105,11 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Turns the build array into a function that will be run in all future uses
      * of the template. Makes use of me.build[] to create the function.
      *
-     * @return  {function}  The compiled function
+     * @returns {function}  The compiled function
      */
     compile: function() {
         var me = this,
@@ -732,13 +1157,13 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Returns the string passed in, or the default string if the value is blank.
      *
      * @param   {string}    str     Any string
      * @param   {string}    default A value to replace a blank string with
      *
-     * @return  {string}    The value string passed in, or the default value
+     * @returns {string}    The value string passed in, or the default value
      */
     defaultVal: function(str, dflt) {
         // A blank or undefined string will evaluate to false in JS
@@ -774,52 +1199,52 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Escape a string for a given type of output, or reverse that escaping
      *
      * @param   {string}    str         The string to escape/unescape
      * @param   {string}    type        String containing the escape type ('html'|'javascript'|'json'|'url')
      * @param   {boolean}   unescape    Flag to reverse the usual escape sequence
      *
-     * @return  {string}    An escaped string.
+     * @returns {string}    An escaped string.
      */
     escape: function(str, type, unescape) {
         unescape = unescape || false;
 
-        var me = this,
-            actions = {
-                html: function() {
-                    var baseMap = me.escapeHTML,
-                        map = unescape ? me.invert(baseMap) : baseMap,
-                        regex = new RegExp('[' + me.getKeys(map).join('').replace(/\//,'\\/') + ']', 'g');
+        var me = this;
+        var actions = {
+            html: function() {
+                var baseMap = me.escapeHTML,
+                    map = unescape ? me.invert(baseMap) : baseMap,
+                    regex = new RegExp('[' + me.getKeys(map).join('').replace(/\//,'\\/') + ']', 'g');
 
-                    return String(str).replace(regex, function(match) {
-                        return map[match];
-                    });
-                },
-                
-                javascript: function() {
-                    var baseMap = me.escapeJS,
-                        map = unescape ? me.invert(baseMap) : baseMap,
-                        // The JS regex cannot be constructed like the HTML one above because the JS string
-                        // has to be escaped to be made into a regex, but then the map won't work.
-                        regex = unescape ? /\\\\|\'|\\"|\\r|\\n|<\//g : /<\/|"|'|\\|\n|\r/g;
+                return String(str).replace(regex, function(match) {
+                    return map[match];
+                });
+            },
+            
+            javascript: function() {
+                var baseMap = me.escapeJS,
+                    map = unescape ? me.invert(baseMap) : baseMap,
+                    // The JS regex cannot be constructed like the HTML one above because the JS string
+                    // has to be escaped to be made into a regex, but then the map won't work.
+                    regex = unescape ? /\\\\|\\'|\\"|\\r|\\n|<\//g : /<\/|"|'|\\|\n|\r/g;
 
-                    return String(str).replace(regex, function(match) {
-                        return map[match];
-                    });
-                },
-                
-                json: function() {
-                    var action = unescape ? 'parse' : 'stringify';
-                    return JSON[action](str);
-                },
-                
-                url: function() {
-                    var action = unescape ? 'decodeURI' : 'encodeURI';
-                    return JSON[action](str);
-                }
-            };
+                return String(str).replace(regex, function(match) {
+                    return map[match];
+                });
+            },
+            
+            json: function() {
+                var action = unescape ? 'parse' : 'stringify';
+                return JSON[action](str);
+            },
+            
+            url: function() {
+                var action = unescape ? 'decodeURI' : 'encodeURI';
+                return JSON[action](str);
+            }
+        };
 
         if(typeof actions[type] === 'function') {
             return actions[type]();
@@ -830,16 +1255,19 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Returns the keys of an object as an alphabetically sorted array.
      *
-     * @param   {object}    obj     Any plain object. Example:
+     * @param   {object}    obj     Any plain object. For example the following output will return
+     *                              the values in the return statement:
+     *
      *                              {
      *                                  asdf: 1,
      *                                  zxcv: 2,
      *                                  qwer: 3
      *                              }
-     * @return  {array}     Sorted array of object keys. i.e: ['asdf', 'qwer', 'zxcv'].
+     *
+     * @returns {Array}     Sorted array of object keys. i.e: `['asdf', 'qwer', 'zxcv']`.
      */
     getKeys: function(obj){
         var retArray = [];
@@ -850,32 +1278,31 @@ Wui.Smarty.prototype = {
             });
         }
 
-        return retArray.sort();
+        return (retArray.sort());
     },
 
 
-    /*
-     * Inverts an object so that its keys are its values, and its values are its keys.
-     * Complex values will be dropped (functions, arrays, and objects). If a non-object,
-     * or an empty object is passed in, an empty object will be returned.
+    /**
+     * Determines whether the property exists in the passed in object
      *
      * @param   {object}    obj         The object to be searched within.
      * @param   {string}    property    A string of the property to search for within 'obj'.
      *
-     * @return  {boolean}   Whether the property exists within the object
+     * @returns {boolean}   Whether the property exists within the object
      */
     hasProperty: function(obj, property) {
         return obj !== null && typeof obj === 'object' && (property in obj);
     },
 
 
-    /*
+    /**
      * Inverts an object so that its keys are its values, and its values are its keys.
      * Complex values will be dropped (functions, arrays, and objects). If a non-object,
      * or an empty object is passed in, an empty object will be returned.
      *
      * @param   {object}    obj     The object to be inverted.
-     * @return  {object}    The passed in object copied and inverted, or an empty object.
+     *
+     * @returns {object}    The passed in object copied and inverted, or an empty object.
      */
     invert: function(obj) {
         var retObj = {};
@@ -893,15 +1320,15 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Looks for a javascript function and passes parameters to it
      *
-     * @param   {string}    fn      The name of a function that has been added as a config
-     *                              to an instance of this template
-     * @param   {string}    ...     Zero or more names of parameters to be looked up in the
-     *                              template's data record
+     * @param   {string}    fn          The name of a function that has been added as a
+     *                                  config to an instance of this template.
+     * @param   {string}    [name__]    Zero or more names of parameters to be looked
+     *                                  up in the template's data record.
      *
-     * @return  {string}    The return value from the function
+     * @returns {string}    The return value from the function
      */
     js_function: function(fn){
         var me = this,
@@ -916,13 +1343,14 @@ Wui.Smarty.prototype = {
     },
 
 
-    /* Determine whether a key exists in the record, and either inserts it into the template,
+    /**
+     * Determine whether a key exists in the record, and either inserts it into the template,
      * or safely ignores it and inserts a blank string.
      *
      * @param   {object}    rec     The data object to look for values in
-     * @param   {string}    key     A string containing a refence to a value to return
+     * @param   {string}    key     A string containing a reference to a value to return
      *
-     * @return  {string}    Either the value referenced in key, or a blank string if the value
+     * @returns {string}    Either the value referenced in key, or a blank string if the value
      *                      did not exist.
      */
     lookup: function(rec, key) {
@@ -959,22 +1387,24 @@ Wui.Smarty.prototype = {
     },
 
 
-    /*
+    /**
      * Capitalizes the entire string.
      *
      * @param   {string}    str     A string to be capitalized. ie: "FOO BAR BAZ"
-     * @return  {string}    Lower-case string. ie: "foo bar baz"
+     *
+     * @returns {string}    Lower-case string. ie: "foo bar baz"
      */
     lower: function(str) {
         return String(str).toLowerCase();
     },
 
 
-    /*
+    /**
      * Returns a filled template. One of the important features of this method is to
      *
      * @param   {object}    rec     Data to fill into the template
-     * @return  {string}    A template string with data values filled in
+     *
+     * @returns {string}    A template string with data values filled in
      */
     make: function(rec){
         var me = this;
@@ -1008,7 +1438,7 @@ Wui.Smarty.prototype = {
      * the build array which is used to create the 'compiled' function. Also fills the template
      * string with values for the current record.
      *
-     * @returns     String      The full template string with comments removed and values inserted.
+     * @returns     {string}    The full template string with comments removed and values inserted.
      */
     parse: function() {
         var me = this,
@@ -1050,13 +1480,16 @@ Wui.Smarty.prototype = {
     },
     
     
-    /*
+    /**
      * Trims any set of custom characters off of the beginning and end of a string
      *
      * @param   {string}    str         The string to trim
-     * @param   {string}    characters  An undelimited string of characters to trim off both sides of the string
-     * @param   {string}    flags       Optional. Regex flags that would be used in a javascript regex. Defaults to 'g'.
-     * @return  {string}    A trimmed string
+     * @param   {string}    characters  An undelimited string of characters to trim off both sides
+     *                                  of the string.
+     * @param   {string}    flags       Optional. Regex flags that would be used in a javascript
+     *                                  regex. Defaults to 'g'.
+     *
+     * @returns {string}    A trimmed string
      */
     trimSpecial: function trim(str, characters, flags) {
         flags = flags || "g";
@@ -1071,23 +1504,25 @@ Wui.Smarty.prototype = {
     },
     
     
-    /*
+    /**
      * Unescape a string for a given type of output.
      *
      * @param   {string}    str         The string to escape/unescape
      * @param   {string}    type        String containing the escape type ('html'|'javascript'|'json'|'url')
-     * @return  {string}    An unescaped string.
+     *
+     * @returns {string}    An unescaped string.
      */
     unescape: function(str, type){
         return this.escape(str, type, true);
     },
     
     
-    /*
+    /**
      * Makes the entire string lower-case.
      *
      * @param   {string}    str     A string to be capitalized. ie: "foo bar baz"
-     * @return  {string}    Capitalized string. ie: "FOO BAR BAZ"
+     *
+     * @returns {string}    Capitalized string. ie: "FOO BAR BAZ"
      */
     upper: function(str) {
         return String(str).toUpperCase();
@@ -1095,9 +1530,9 @@ Wui.Smarty.prototype = {
 };
 
 /**
- * Combo2 - A WUI-based control
+ * Combo2 - Combination of a select element and an autocomplete
  * =================================================================================================
- * (a combination of a select and an autocomplete)
+ * (A Wui based control)
  *
  * Examples
  * --------
@@ -1221,36 +1656,57 @@ Wui.Smarty.prototype = {
  *           list. This message can be changed with the `noResultsMessage` attribute.
  *
  * @class Wui.Combo2
- * 
- * @param       {Object}    args    A configuration object containing overrides for the default configs
- *                                  below as well as methods in the prototype.
  *
- * @param       {Node}      target  Optional. A target can be a DOM node, a jQuery Object, or a selector
+ * @author  Stephen Nielsen (rolfe.nielsen@gmail.com)
+ * 
+ * @param   {Object}    args    A configuration object containing overrides for the default configs
+ *                              below as well as methods in the prototype.
+ *
+ * @param   {Boolean}   args.autoLoad[false]    Whether to load remote data on instantiation of the
+ *                                              Combo (true), or to load remote data based on a
+ *                                              user's search. Default: false.
+ *
+ * @param   {Node}      target  Optional. A target can be a DOM node, a jQuery Object, or a selector
  *                                  string that returns one item that is expected to reference a select
  *                                  box that will have its data pulled into the Combo's data array.
  *
- * @returns     {Object}    The Wui.Combo2 object is returned.
+ * @returns {Object}    The Wui.Combo2 object is returned.
  */
 Wui.Combo2 = function(args, target) {    
-    $.extend(this, {        
-        // Whether to load remote data on instantiation of the Combo (true), or to load 
-        // remote data based on a user's search. Default: false.
+    $.extend(this, {
         autoLoad: false,
-        
-        // A CSS class that will be applied to the options list (or dropdown). This class can be
-        // useful for setting a max/min height or width, or for special styling.
+
+        /**
+         * @property    {String}    A space separated string containing names of CSS class(es) that
+         *                          will be applied to the options list (or dropdown). This class
+         *                          can be useful for setting a max/min height or width, or for
+         *                          special styling. Default: ''.
+         * @memberof    Wui.Combo2
+         */
         ddCls: '',
-        
-        // Attributes to set on the object - good for setting 'data-' items
+
+        /**
+         * @property    {Object}    Attributes to set on the object - good for setting 'data-' items
+         *                          Default: {}.
+         * @memberof    Wui.Combo2
+         */
         attr: {},
 
-        // The message to display when a search yields no results, whether local or remote. May be
-        // a plain text string, or HTML formatted.
+        /**
+         * @property    {String}    The message to display when a search yields no results, whether
+         *                          local or remote. May be  a plain text string, or HTML formatted.
+         *                          Default: 'No Results'.
+         * @memberof    Wui.Combo2
+         */
         noResultsMessage: 'No Results.',
-        
-        // The text field for the combo. This field is specified in the constructor of the Combo (as
-        // opposed to the prototype) because it must be a new DOM node for every instance of
-        // the Combo.
+
+        /**
+         * @property    {HTMLElement}   A jQuery wrapper of the text field for the combo. This field
+         *                              is specified in the constructor of the Combo (as opposed to
+         *                              the prototype) because it must be a new DOM node for every
+         *                              instance of the Combo.
+         * @memberof    Wui.Combo2
+         */
         field: $('<input>').attr({
             type:               'text',
             autocomplete:       'off',
@@ -1260,7 +1716,7 @@ Wui.Combo2 = function(args, target) {
         }).addClass('wui-combo-search'),
         
         /** 
-         * @property {Boolean} forceSelect The user MUST select an item from the option list when true.
+         * @property    {Boolean}   forceSelect     The user MUST select an item from the option list when true.
          * @memberof Wui.Combo2
          */
         forceSelect: false,
@@ -1625,7 +2081,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
     
     
     /**
-     * Creates the button for toggling the options list based on the value of the Combo's `showDD` property
+     * Creates the button for toggling the options list based on the value of the Combo's 'showDD' property
      */
     createOptionListToggle: function() {
         var me = this,
@@ -1793,9 +2249,9 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * Returns a record containing a key value pair to be found in a record.
      *
      * @param    {String}           key     The data item to look for
-     * @param    {any}              val     The value to look for
+     * @param    {*}                val     The value to look for
      *
-     * @return {Object|undefined}   An object containing the dataList, row, and record, 
+     * @returns {Object|undefined}  An object containing the dataList, row, and record,
      *                              or undefined if there was no matching row.
      */       
     getItemBy: function(key, val) {
@@ -3067,7 +3523,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
      * item.
      *
      * NOTE: Because a blank string and null are both valid options in a
-     * HTMLSelectElement, calling this method with `undefined` for sv is the ONLY
+     * HTMLSelectElement, calling this method with 'undefined' for sv is the ONLY
      * way to programmatically reset the field to an "un-interacted-with" state, and
      * will only do so on a field that is not consuming a select element.
      * It is important this behavior is not changed without fully understanding
