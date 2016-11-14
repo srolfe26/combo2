@@ -1,7 +1,7 @@
 /**
  * Combo2 - Combination of a select element and an autocomplete
  * =================================================================================================
- * (A Wui based control)
+ * A Wui based control. See the [demo](http://www.wui-js.com/combo2/) page for more advanced implementation examples.
  *
  * Examples
  * --------

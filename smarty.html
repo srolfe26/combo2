@@ -24,13 +24,28 @@
             display: block;
             background-color: #f1f1f1;
         }
+
+        .top-menu li {
+            list-style: none;
+            float: right;
+            padding: 0 1em;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 100;
+        }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="dist/combo-2.min.js"></script>
 </head>
 <body class="language-js">
     <div id="docs-container">
-         <div class="docs-panel" id="wui-smarty"></div>
+         <div class="docs-panel" id="wui-smarty">
+             <ul class="top-menu">
+                 <li><a target="_blank" href="https://github.com/srolfe26/combo2/blob/master/src/Smarty.js">Smarty Source Code</a></li>
+                 <li><a target="_blank" href="http://www.wui-js.com/combo2/">Check out Combo2</a></li>
+                 <li><a target="_blank" href="http://www.wui-js.com/">Check out the WUI</a></li>
+            </ul>
+         </div>
     </div>
     <script type="text/javascript" src="assets/docs.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/prism.min.js"></script>
