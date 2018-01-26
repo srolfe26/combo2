@@ -121,7 +121,7 @@ Wui.getStylesForElement = function(elem) {
 
     Array.prototype.slice.call(document.styleSheets).forEach(function (stylesheet) {
         // some stylesheets don't have rules
-        if (!stylesheet.rules) {
+        if (!stylesheet.hasOwnProperty('rules')) {
             return;
         }
         
