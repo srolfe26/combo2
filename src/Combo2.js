@@ -321,6 +321,51 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
         }
     },
 
+
+
+
+    /**
+     * Returns a function, that, as long as it continues to be invoked, will not
+     * be triggered. The function will be called after it stops being called for
+     * wait milliseconds.
+     * https://github.com/jashkenas/underscore/blob/1.6.0/underscore.js#L714
+     * 
+     * @param {function} func    The function to be debounced.
+     * 
+     * @param {Number}   wait    The max wait time in milliseconds.
+     * 
+     * @returns {function}       The debounced function.
+     */
+    debounce: function(func, wait) {
+        var timeoutId;
+        var args;
+        var context;
+        var timestamp; // of most recent call
+        var later = function() {
+            var last = +new Date() - timestamp;
+            if (last < wait && last > 0) {
+                timeoutId = setTimeout(later, wait - last);
+            }
+            else {
+                timeoutId = null;
+                func.apply(context, args);
+                if (!timeoutId) {
+                    context = args = null;
+                }
+            }
+        };
+
+        return function() {
+            context = this;
+            args = arguments;
+            timestamp = +new Date();
+            if (!timeoutId) {
+                timeoutId = setTimeout(later, wait);
+            }
+        };
+    },
+
+
     
     /**
      * Adds change listeners to the passed in target.
@@ -1818,6 +1863,65 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                 UP:     38,
                 DOWN:   40
             };
+
+
+        /**
+         * keyup handler for the input field.
+         * @param {Event} event 
+         */
+        function keyup_handler(event) {
+            var key = null;
+            
+            if (event.keyCode == keys.ENTER) {
+                if (me._open) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    me.set();
+                }
+            }
+            else {
+                event.stopPropagation();
+            }
+            
+            if (me.can_search && $.inArray(event.keyCode,[keys.TAB, keys.SHIFT]) == -1) {
+                if (me.total >= me.searchThreshold || !me.searchLocal) {
+                    me.searchData();
+                }
+                // When not filtering, we want to behave like a standard select box and jump
+                // to the item in the select that matches the filter
+                else {
+                    // Get the character of the key being pressed
+                    if (event.which !== 0 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                        key = String.fromCharCode(event.which);
+                        
+                        if (!Wui.isset(me.selectTypeBuffer)) {
+                            me.selectTypeBuffer = key;
+                            
+                            // This buffer should only last for a second, then it will clear.
+                            // Allows a user to quickly type out the first few characters of an
+                            // option item and have the combo move the selection to them.
+                            setTimeout(function(){
+                                me.selectTypeBuffer = undefined;
+                            }, 1000);
+                        }
+                        else {
+                            // If the user presses multiple keys under a second, use them all
+                            // to search
+                            me.selectTypeBuffer += key;
+                        }
+                        
+                        me.searchHTMLText(me.selectTypeBuffer, function(itm) {
+                            me.selectByEl(itm);
+                        });
+                    }
+                }
+                
+            }
+        }
+
+
+        // Create a debounced version of the keyup handler.
+        var debounced_keyup_handler = debounce(keyup_handler, 400);
                     
         return me.field
             .on('keydown', function(event) {
@@ -1891,55 +1995,7 @@ Wui.Combo2.prototype = $.extend(new Wui.Data(), {
                     }
                 }
             })
-            .on('keyup', function(event) {
-                var key = null;
-                
-                if (event.keyCode == keys.ENTER) {
-                    if (me._open) {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        me.set();
-                    }
-                }
-                else {
-                    event.stopPropagation();
-                }
-                
-                if (me.can_search && $.inArray(event.keyCode,[keys.TAB, keys.SHIFT]) == -1) {
-                    if (me.total >= me.searchThreshold || !me.searchLocal) {
-                        me.searchData();
-                    }
-                    // When not filtering, we want to behave like a standard select box and jump
-                    // to the item in the select that matches the filter
-                    else {
-                        // Get the character of the key being pressed
-                        if (event.which !== 0 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-                            key = String.fromCharCode(event.which);
-                            
-                            if (!Wui.isset(me.selectTypeBuffer)) {
-                                me.selectTypeBuffer = key;
-                                
-                                // This buffer should only last for a second, then it will clear.
-                                // Allows a user to quickly type out the first few characters of an
-                                // option item and have the combo move the selection to them.
-                                setTimeout(function(){
-                                    me.selectTypeBuffer = undefined;
-                                }, 1000);
-                            }
-                            else {
-                                // If the user presses multiple keys under a second, use them all
-                                // to search
-                                me.selectTypeBuffer += key;
-                            }
-                            
-                            me.searchHTMLText(me.selectTypeBuffer, function(itm) {
-                                me.selectByEl(itm);
-                            });
-                        }
-                    }
-                    
-                }
-            })
+            .on('keyup', debounced_keyup_handler)
             .on('focus', function(event) {
                 event.stopPropagation();
                 
