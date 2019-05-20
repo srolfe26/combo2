@@ -1,0 +1,358 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Combo2 Test</title>
+        <meta name="description" content="WUI - Webteam User Interface is a *vc javascript framework for rapid app development.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <link rel="stylesheet" href="demo.css" type="text/css" media="all">
+        <link rel="stylesheet" href="../../dist/combo2-v1.1.7.css" type="text/css" media="all">
+        <script
+        src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8="
+        crossorigin="anonymous"></script>
+        <script src="../../dist/combo2-v1.1.7.js"></script>
+    
+        <style>
+            body {
+                /* Test Scrolling/Positioning
+                 margin: 1000px 3em;  */
+            }
+        </style>
+        
+    </head>
+    <body class="language-js">
+        <div class="content">
+            <h1>Combo 2 Demo</h1>
+            
+            <p>
+                The <a href="docs.html">documentation</a> describes very basic usage and supporting methods.
+                See the HTML source of this page for implementation details.
+            </p>
+        
+            <h2>Standard Filterable Select</h2>
+        
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>standard_select = new wuiCombo2(
+    // configs
+    {
+        width: '100%'
+    },
+    
+    // jQuery object, DOM node, or selector string
+    '#target'
+);
+</code></pre>
+                </div>
+                
+                <div class="fifty">
+                    <p>Makes this:</p>
+                    
+                    <select name="original" id="original">
+                        <option value disabled selected>(required)</option>
+                        <option value></option>
+                        <option>Russ</option>
+                        <option>Mike</option>
+                        <option>John</option>
+                        <optgroup label="Awesome">
+                            <option>Tim</option>
+                            <option>Stephen</option>
+                            <option>Lance</option>
+                            <option>Bobby</option>
+                            <option>DeVerl</option>
+                            <option>Jeff</option>
+                        </optgroup>
+                        <optgroup label="Super">
+                            <option value="bruce wayne">Na na na na na na na na na na na na na na na na na na na na na na na na na Batman!</option>
+                            <option value="clark kent">Super Man</option>
+                            <option value="oliver queen">Green Arrow</option>
+                            <option value="barry allen">The Flash</option>
+                        </optgroup>
+                    </select>
+
+                    <p>Become this:</p>
+                    
+                    <select name="the_guys" id="target">
+                        <option value disabled selected>(required)</option>
+                        <option value></option>
+                        <option>Russ</option>
+                        <option>Mike</option>
+                        <option>John</option>
+                        <optgroup label="Awesome">
+                            <option>Tim</option>
+                            <option>Stephen</option>
+                            <option>Lance</option>
+                            <option>Bobby</option>
+                            <option>DeVerl</option>
+                            <option>Jeff</option>
+                        </optgroup>
+                        <optgroup label="Super">
+                            <option value="bruce wayne">Na na na na na na na na na na na na na na na na na na na na na na na na na Batman!</option>
+                            <option value="clark kent">Super Man</option>
+                            <option value="oliver queen">Green Arrow</option>
+                            <option value="barry allen">The Flash</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            
+            
+            <h2>No-Filter Threshold Select</h2>
+        
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>no_filter = new wuiCombo2({
+    // Below this threshold, the Combo behaves like a 
+    // regular select element, and doesn't search.
+    searchThreshold: 7
+}, '#no_filter_target');</code></pre>
+                </div>
+                
+                <div class="fifty">
+                    <p>Makes this:</p>
+                    
+                    <select name="short_list">
+                        <option>Russ</option>
+                        <option>Dirk</option>
+                        <option>Mike</option>
+                        <option>John</option>
+                        <option>Dave</option>
+                    </select>
+
+                    <p>Become this:</p>
+                    
+                    <select name="short_list" id="no_filter_target">
+                        <option>Russ</option>
+                        <option>Dirk</option>
+                        <option>Mike</option>
+                        <option>John</option>
+                        <option>Dave</option>
+                    </select>
+                </div>
+            </div>
+            
+            
+           <!--  <h2>Multiple</h2>
+        
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code></code></pre>
+                </div>
+                
+                <div class="fifty">
+                    <p>Makes this:</p>
+                    
+                    <select multiple name="multiple">
+                        <option>Red</option>
+                        <option>Orange</option>
+                        <option>Yellow</option>
+                        <option>Green</option>
+                        <option>Blue</option>
+                        <option>Indigo</option>
+                        <option>Violet</option>
+                    </select>
+
+                    <p>Become this:</p>
+                    
+                    <select multiple name="multiple_too" id="multiple_target">
+                        <option>Red</option>
+                        <option>Orange</option>
+                        <option>Yellow</option>
+                        <option>Green</option>
+                        <option>Blue</option>
+                        <option>Indigo</option>
+                        <option>Violet</option>
+                    </select>
+                </div>
+            </div> -->
+            
+            
+            <h2>Local Dataset without target</h2>
+            
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>local_dataset = new wuiCombo2({
+    width:  300,
+    valueItem: 'id',
+    titleItem: 'person',
+    data:   [
+        {id:0, person:"Jeff"},
+        {id:1, person:"Tim"},
+        {id:2, person:"Steve"}
+    ],
+    name: 'local_people',
+    // 'append'|'prepend'|'before'|'after'
+    append: $('#local_dom_target')
+});</code></pre>
+                </div>
+                
+                <div class="fifty" id="local_dom_target">
+                    <p>Makes this:</p>           
+                </div>
+            </div>
+            
+            
+            <h2>Local Dataset with &lt;input&gt; target</h2>
+            
+            <div class="col-container">
+                <div class="fifty">
+                    <p>This code:</p>
+                    
+<pre><code>// Appends to &lt;input type="text" name="form_singers"&gt;
+local_with_target = new wuiCombo2({
+    width:  300,
+    valueItem: 'id',
+    titleItem: 'person',
+    data:   [
+        {id:0, person:"Peter"},
+        {id:1, person:"Paul"},
+        {id:2, person:"Mary"}
+    ]
+}, $('[name="form_singers"]'));</code></pre>
+                </div>
+                
+                <div class="fifty" id="local_dom_target">
+                    <p>Makes this:</p>
+                    <input type="text" name="form_singers" />       
+                </div>
+            </div>
+            
+            
+            <h2>Remote Dataset with Template and Template Function</h2>
+            
+            <div class="col-container">
+                <div>
+                    <p>This code (<em>only works if this page is on a domain that can do AJAX</em>):</p>
+                    
+<pre><code>remote = new wuiCombo2({
+    width:      300,
+    valueItem:  'tx_id',
+    titleItem:  'description',
+    url:        'data.json',
+    template:   '&lt;li>{|function:"amountView":"amount"} &lt;span class="dd-span dd-date">{date}&lt;/span> {description}&lt;/li>',
+    templateFn: {
+        amountView: function(amount) {
+            if (amount > 0) {
+                return '&lt;span class="dd-span dd-amount positive">' + parseFloat(amount).toFixed(2) + '&lt;/span>';
+            }
+            else {
+                return '&lt;span class="dd-span dd-amount">' + parseFloat(amount).toFixed(2) + '&lt;/span>';
+            }
+        }
+    },
+    append: '#remote_dom_target'
+});</code></pre>
+                </div>
+                
+                <div id="remote_dom_target" style="text-align: center;">
+                    <p>Makes this:</p>           
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            // For the standard select box
+            standard_select = new wuiCombo2({
+                width: '100%'
+            }, '#target');
+            
+            
+            // No Filter Select
+            no_filter = new wuiCombo2({
+                searchThreshold: 7
+            }, '#no_filter_target');
+            
+            
+            // Multiple Select
+            // standard_select = new wuiCombo2({
+            //     width: '100%'
+            // }, '#multiple_target');
+            
+            
+            // Combo with its own dataset
+            local_dataset = new wuiCombo2({
+                width: 200,
+                valueItem: 'id',
+                titleItem: 'person',
+                data:   [
+                    {id:0, person:"Jeff"},
+                    {id:1, person:"Tim"},
+                    {id:2, person:"Steve"}
+                ],
+                name: 'local_people',
+                // 'append'|'prepend'|'before'|'after'
+                append: $('#local_dom_target')
+            });
+            
+            // Appends to DOM element <input type="text" name="form_singers">
+            local_with_target = new wuiCombo2({
+                width:  300,
+                valueItem: 'id',
+                titleItem: 'person',
+                data:   [
+                    {id:0, person:"Peter"},
+                    {id:1, person:"Paul"},
+                    {id:2, person:"Mary"}
+                ]
+            }, $('[name="form_singers"]'));
+            
+            // Remote Data
+            remote = new wuiCombo2({
+                width:      300,
+                valueItem:  'tx_id',
+                titleItem:  'description',
+                url:        'data.json',
+                template:   '<li>{|function:"amountView":"amount"} <span class="dd-span dd-date">{date}</span> {description}</li>',
+                templateFn: {
+                    amountView: function(amount) {
+                        if (amount > 0) {
+                            return '<span class="dd-span dd-amount positive">' + parseFloat(amount).toFixed(2) + '</span>';
+                        }
+                        else {
+                            return '<span class="dd-span dd-amount">' + parseFloat(amount).toFixed(2) + '</span>';
+                        }
+                    }
+                },
+                append: '#remote_dom_target'
+            });
+            
+            
+            // // WUI Change listener
+            // $(document).on('valchange', function(event, combo) {
+            //     if (console) {
+            //         console.log(
+            //             arguments,                  // All the information the change event provides
+            //             combo.val(),                // The value of the WUI Combo
+            //             $('#target').val()           // The value of the underlying select box
+            //         );
+            //     }
+            // });
+            
+            
+            // // Listener on original select for the focus event to come through
+            // $('#target').on('focus', function(){
+            //     if (console) {
+            //         console.log('focused!');
+            //     }
+            // });
+            
+            
+            // // Test loading an option at runtime
+            // $('#target [label=Awesome]').append('<option>Dave</Dave>');
+            // $('#target').val('Dave');
+        </script>
+        
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/prism.min.js"></script>
+    </body>
+</html>
