@@ -1,3 +1,5 @@
+import "./import-jquery";
+
 /**
  * WUI Core Methods
  * =================================================================================================
@@ -9,7 +11,7 @@
  */
 /* jshint ignore:start */
 // Make sure the WUI is defined.
-window.Wui = function() {
+const Wui = function() {
     return Wui || {};
 };
 /* jshint ignore:end */
@@ -251,3 +253,5 @@ Wui.unwrapData = function(response) {
     
     return {data:resp, total:total};
 };
+
+export { Wui };
