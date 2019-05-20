@@ -41,9 +41,7 @@ build/
 eggs/
 parts/
 var/
-sdist/
 develop-eggs/
-node_modules/
 .installed.cfg
 
 # Unit test / coverage reports
